@@ -181,8 +181,11 @@ export default function RecordGamePage() {
         return;
       }
 
-      // Submit only the winner, but track all players who participated
-      resultsToSubmit = gamePlayers.filter((p) => p.rank === 1);
+      // Submit all players: winner gets rank 1, others get rank 0 for tracking games played
+      resultsToSubmit = gamePlayers.map((p) => ({
+        ...p,
+        rank: p.rank === 1 ? 1 : 0,
+      }));
     } else {
       // For Pointing System: handle both score and rank modes
       if (inputMode === 'score') {
