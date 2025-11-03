@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    const { gameId, playedAt, results } = body;
+    const { gameId, playedAt, results, playerCount } = body;
 
     // Validate required fields
     if (!gameId) {
@@ -71,13 +71,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate rankings
-    const rankingValidation = validateRankings(results);
-    if (!rankingValidation.valid) {
-      return NextResponse.json(
-        { error: rankingValidation.error },
-        { status: 400 }
-      );
+    // For Winner Takes All, validate and process differently
+    if (game.scoringMode === 'winner-takes-all') {
+      // Ensure exactly 1 player with rank 1
+      const winnersCount = results.filter((r: PlayerResult) => r.rank === 1).length;
+      if (winnersCount !== 1) {
+        return NextResponse.json(
+          { error: 'Winner Takes All mode requires exactly 1 player with rank 1' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // For Pointing System, validate rankings
+      const rankingValidation = validateRankings(results);
+      if (!rankingValidation.valid) {
+        return NextResponse.json(
+          { error: rankingValidation.error },
+          { status: 400 }
+        );
+      }
     }
 
     // Fetch all players and validate they exist
@@ -100,23 +112,26 @@ export async function POST(request: NextRequest) {
       playerName: playerMap.get(r.playerId) || 'Unknown',
     }));
 
+    // Use provided playerCount (for Winner Takes All) or results.length (for Pointing System)
+    const actualPlayerCount = playerCount || results.length;
+
     // Calculate scores
     const scoredResults = calculateScores(
       game.scoringMode,
-      results.length,
+      actualPlayerCount,
       game.pointsPerPlayer,
       resultsWithNames
     );
 
     // Calculate total pool
-    const totalPointsPool = getTotalPointsPool(results.length, game.pointsPerPlayer);
+    const totalPointsPool = getTotalPointsPool(actualPlayerCount, game.pointsPerPlayer);
 
     // Create game session
     const session = new GameSession({
       gameId: game._id,
       gameName: game.name,
       scoringMode: game.scoringMode,
-      playerCount: results.length,
+      playerCount: actualPlayerCount,
       playedAt: playedAt || new Date(),
       results: scoredResults,
       totalPointsPool,

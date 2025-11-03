@@ -312,9 +312,14 @@ export default function GamesPage() {
                   }}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
-                  <option value="pointing">Pointing System (1st: 2/3, 2nd: 2/3 remainder, 3rd: rest)</option>
+                  <option value="pointing">Pointing System</option>
                   <option value="winner-takes-all">Winner Takes All</option>
                 </select>
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                  {scoringMode === 'pointing'
+                    ? '💡 Top 3 players earn points from a shared pool. 1st: 2/3 of pool, 2nd: 2/3 of remainder, 3rd: rest'
+                    : '💡 Winner gets all points, others get 0'}
+                </p>
               </div>
 
               <div>

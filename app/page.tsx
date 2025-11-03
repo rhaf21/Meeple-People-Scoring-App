@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import PlayerAwards from '@/components/PlayerAwards';
 
 interface PlayerStats {
   _id: string;
@@ -82,7 +83,10 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 animate-fadeIn">Dashboard</h1>
+
+          {/* Player Awards */}
+          <PlayerAwards />
 
           {loading ? (
             <div className="text-center py-12">
@@ -92,7 +96,7 @@ export default function Dashboard() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Overall Leaderboard */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Overall Leaderboard</h2>
                 {leaderboard.length === 0 ? (
                   <p className="text-gray-700 dark:text-gray-300 text-center py-8">No stats available yet. Play some games!</p>
@@ -144,14 +148,14 @@ export default function Dashboard() {
               </div>
 
               {/* Recent Games */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-200">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Games</h2>
                 {recentGames.length === 0 ? (
                   <p className="text-gray-700 dark:text-gray-300 text-center py-8">No games played yet.</p>
                 ) : (
                   <div className="space-y-4">
-                    {recentGames.map((session) => (
-                      <div key={session._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    {recentGames.map((session, idx) => (
+                      <div key={session._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fadeInUp" style={{animationDelay: `${0.1 * idx}s`}}>
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-gray-100">{session.gameName}</h3>
                           <span className="text-xs text-gray-600 dark:text-gray-400">
@@ -180,22 +184,22 @@ export default function Dashboard() {
           )}
 
           {/* Quick Actions */}
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
             <Link
               href="/record"
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg text-center button-hover shadow-lg"
             >
               Record New Game
             </Link>
             <Link
               href="/players"
-              className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold py-4 px-6 rounded-lg text-center button-hover shadow-lg"
             >
               Manage Players
             </Link>
             <Link
               href="/history"
-              className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors"
+              className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold py-4 px-6 rounded-lg text-center button-hover shadow-lg"
             >
               View History
             </Link>
