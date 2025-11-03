@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import PlayerAwards from '@/components/PlayerAwards';
+import BestPlayerPerGame from '@/components/BestPlayerPerGame';
 
 interface PlayerStats {
   _id: string;
@@ -87,6 +88,9 @@ export default function Dashboard() {
 
           {/* Player Awards */}
           <PlayerAwards />
+
+          {/* Game Champions */}
+          <BestPlayerPerGame />
 
           {loading ? (
             <div className="text-center py-12">

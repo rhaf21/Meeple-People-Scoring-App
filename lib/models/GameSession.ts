@@ -61,7 +61,7 @@ const GameSessionSchema = new Schema<IGameSession>(
         rank: {
           type: Number,
           required: true,
-          min: 1,
+          min: 0,
         },
         score: {
           type: Number,
