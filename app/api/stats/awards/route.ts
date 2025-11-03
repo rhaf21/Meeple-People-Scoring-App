@@ -57,54 +57,46 @@ export async function GET() {
       });
     });
 
-    // Find top player for week
-    let playerOfWeek: PlayerAward | null = null;
-    let maxWeekPoints = 0;
-    weekPlayerPoints.forEach((data, playerId) => {
-      if (data.points > maxWeekPoints) {
-        maxWeekPoints = data.points;
-        playerOfWeek = {
-          playerId,
-          playerName: data.name,
-          totalPoints: data.points,
-          gamesPlayed: data.games,
-        };
-      }
+    // Find top 3 players for week
+    const weekTopPlayers = Array.from(weekPlayerPoints.entries())
+      .map(([playerId, data]) => ({
+        playerId,
+        playerName: data.name,
+        totalPoints: data.points,
+        gamesPlayed: data.games,
+      }))
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 3);
+
+    // Find top 3 players for month
+    const monthTopPlayers = Array.from(monthPlayerPoints.entries())
+      .map(([playerId, data]) => ({
+        playerId,
+        playerName: data.name,
+        totalPoints: data.points,
+        gamesPlayed: data.games,
+      }))
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 3);
+
+    // Fetch player photos for all winners
+    const allPlayerIds = [...weekTopPlayers, ...monthTopPlayers].map(p => p.playerId);
+    const players = await Player.find({ _id: { $in: allPlayerIds } });
+    const playerPhotoMap = new Map(players.map(p => [p._id.toString(), p.photoUrl]));
+
+    // Add photos to week top players
+    weekTopPlayers.forEach(player => {
+      player.playerPhoto = playerPhotoMap.get(player.playerId);
     });
 
-    // Find top player for month
-    let playerOfMonth: PlayerAward | null = null;
-    let maxMonthPoints = 0;
-    monthPlayerPoints.forEach((data, playerId) => {
-      if (data.points > maxMonthPoints) {
-        maxMonthPoints = data.points;
-        playerOfMonth = {
-          playerId,
-          playerName: data.name,
-          totalPoints: data.points,
-          gamesPlayed: data.games,
-        };
-      }
+    // Add photos to month top players
+    monthTopPlayers.forEach(player => {
+      player.playerPhoto = playerPhotoMap.get(player.playerId);
     });
-
-    // Fetch player photos if we have winners
-    if (playerOfWeek) {
-      const player = await Player.findById((playerOfWeek as PlayerAward).playerId);
-      if (player && player.photoUrl) {
-        (playerOfWeek as PlayerAward).playerPhoto = player.photoUrl;
-      }
-    }
-
-    if (playerOfMonth) {
-      const player = await Player.findById((playerOfMonth as PlayerAward).playerId);
-      if (player && player.photoUrl) {
-        (playerOfMonth as PlayerAward).playerPhoto = player.photoUrl;
-      }
-    }
 
     return NextResponse.json({
-      playerOfWeek,
-      playerOfMonth,
+      playerOfWeek: weekTopPlayers.length > 0 ? weekTopPlayers : null,
+      playerOfMonth: monthTopPlayers.length > 0 ? monthTopPlayers : null,
     });
   } catch (error) {
     console.error('Error fetching player awards:', error);
