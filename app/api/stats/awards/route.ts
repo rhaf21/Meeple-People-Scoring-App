@@ -58,10 +58,11 @@ export async function GET() {
     });
 
     // Find top 3 players for week
-    const weekTopPlayers = Array.from(weekPlayerPoints.entries())
+    const weekTopPlayers: PlayerAward[] = Array.from(weekPlayerPoints.entries())
       .map(([playerId, data]) => ({
         playerId,
         playerName: data.name,
+        playerPhoto: undefined,
         totalPoints: data.points,
         gamesPlayed: data.games,
       }))
@@ -69,10 +70,11 @@ export async function GET() {
       .slice(0, 3);
 
     // Find top 3 players for month
-    const monthTopPlayers = Array.from(monthPlayerPoints.entries())
+    const monthTopPlayers: PlayerAward[] = Array.from(monthPlayerPoints.entries())
       .map(([playerId, data]) => ({
         playerId,
         playerName: data.name,
+        playerPhoto: undefined,
         totalPoints: data.points,
         gamesPlayed: data.games,
       }))
