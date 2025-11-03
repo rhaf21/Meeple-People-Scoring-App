@@ -17,7 +17,9 @@
       "Bash(rm:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(git log:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

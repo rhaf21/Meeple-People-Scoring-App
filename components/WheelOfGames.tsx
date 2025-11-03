@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 interface Game {
   _id: string;
   name: string;
+  imageUrl?: string;
+  scoringMode: string;
+  pointsPerPlayer: number;
+  isActive: boolean;
 }
 
 interface WheelOfGamesProps {
