@@ -9,7 +9,7 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Board Game Scoring App",
+  title: "Meeple People Scoring App",
   description: "Track scores and statistics for your board game sessions",
   icons: {
     icon: [
