@@ -25,6 +25,13 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Global cursor pointer for interactive elements */
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {

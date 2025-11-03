@@ -43,6 +43,7 @@ export default function Navigation() {
     { href: '/', label: 'Dashboard' },
     { href: '/players', label: 'Players' },
     { href: '/games', label: 'Games' },
+    { href: '/wheel', label: 'Wheel' },
     { href: '/record', label: 'Record Game' },
     { href: '/history', label: 'History' },
   ];

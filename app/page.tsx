@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import PlayerAwards from '@/components/PlayerAwards';
 import BestPlayerPerGame from '@/components/BestPlayerPerGame';
+import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
 
 interface PlayerStats {
   _id: string;
@@ -99,57 +100,19 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Overall Leaderboard */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Overall Leaderboard</h2>
-                {leaderboard.length === 0 ? (
-                  <p className="text-gray-700 dark:text-gray-300 text-center py-8">No stats available yet. Play some games!</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead>
-                        <tr>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Rank</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Player</th>
-                          <th className="px-3 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Points</th>
-                          <th className="px-3 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Games</th>
-                          <th className="px-3 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Wins</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {leaderboard.map((player, index) => (
-                          <tr key={player._id} className={index === 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''}>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {index === 0 && '🥇'}
-                              {index === 1 && '🥈'}
-                              {index === 2 && '🥉'}
-                              {index > 2 && `#${index + 1}`}
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap">
-                              <div className="flex items-center space-x-3">
-                                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600">
-                                  <Image
-                                    src={getPlayerPhoto(player.playerName)}
-                                    alt={player.playerName}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {player.playerName}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-gray-100 font-semibold">{player.overall.totalPoints}</td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">{player.overall.totalGames}</td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">{player.overall.wins}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              {/* Leaderboard with Monthly View */}
+              <MonthlyLeaderboard
+                overallData={leaderboard.map(p => ({
+                  _id: p._id,
+                  playerName: p.playerName,
+                  playerPhoto: getPlayerPhoto(p.playerName),
+                  totalGames: p.overall.totalGames,
+                  totalPoints: p.overall.totalPoints,
+                  wins: p.overall.wins,
+                  winRate: p.overall.winRate,
+                }))}
+                players={players}
+              />
 
               {/* Recent Games */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-200">
