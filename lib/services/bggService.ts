@@ -2,6 +2,33 @@ import { parseStringPromise } from 'xml2js';
 
 const BGG_API_BASE = 'https://boardgamegeek.com/xmlapi2';
 
+/**
+ * Get BGG API token from environment variables
+ * Token is required for API access as of 2025
+ * Register your app at: https://boardgamegeek.com/applications
+ */
+function getBGGToken(): string | undefined {
+  return process.env.BGG_API_TOKEN;
+}
+
+/**
+ * Get headers for BGG API requests
+ * Includes Authorization token if available
+ */
+function getBGGHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    'User-Agent': 'Mozilla/5.0 (compatible; BoardGameScoreTracker/1.0)',
+    'Accept': 'application/xml, text/xml, */*',
+  };
+
+  const token = getBGGToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
 export interface BGGSearchResult {
   id: number;
   name: string;
@@ -40,7 +67,9 @@ export async function searchBGG(query: string): Promise<BGGSearchResult[]> {
     const encodedQuery = encodeURIComponent(query);
     const url = `${BGG_API_BASE}/search?query=${encodedQuery}&type=boardgame`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getBGGHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`BGG API error: ${response.status}`);
     }
@@ -73,7 +102,9 @@ export async function getBGGGameDetails(bggId: number): Promise<BGGGameDetails> 
   try {
     const url = `${BGG_API_BASE}/thing?id=${bggId}&stats=1`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getBGGHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`BGG API error: ${response.status}`);
     }

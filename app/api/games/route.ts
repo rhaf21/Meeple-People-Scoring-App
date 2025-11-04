@@ -30,7 +30,32 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    const { name, scoringMode, pointsPerPlayer, imageUrl, imagePublicId } = body;
+    const {
+      name,
+      scoringMode,
+      pointsPerPlayer,
+      imageUrl,
+      imagePublicId,
+      // BGG fields
+      bggId,
+      description,
+      yearPublished,
+      minPlayers,
+      maxPlayers,
+      playingTime,
+      minPlaytime,
+      maxPlaytime,
+      minAge,
+      designers,
+      artists,
+      publishers,
+      categories,
+      mechanics,
+      bggRating,
+      bggAverageWeight,
+      thumbnailUrl,
+      bggUrl,
+    } = body;
 
     if (!name || name.trim() === '') {
       return NextResponse.json(
@@ -61,6 +86,25 @@ export async function POST(request: NextRequest) {
       pointsPerPlayer: pointsPerPlayer || (scoringMode === 'winner-takes-all' ? 3 : 5),
       imageUrl,
       imagePublicId,
+      // BGG data
+      bggId,
+      description,
+      yearPublished,
+      minPlayers,
+      maxPlayers,
+      playingTime,
+      minPlaytime,
+      maxPlaytime,
+      minAge,
+      designers,
+      artists,
+      publishers,
+      categories,
+      mechanics,
+      bggRating,
+      bggAverageWeight,
+      thumbnailUrl,
+      bggUrl,
     });
 
     await game.save();

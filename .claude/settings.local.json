@@ -20,7 +20,10 @@
       "Bash(npx:*)",
       "Bash(git log:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm run migrate:bgg:*)",
+      "WebFetch(domain:boardgamegeek.com)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []

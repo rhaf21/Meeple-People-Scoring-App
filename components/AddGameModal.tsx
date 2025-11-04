@@ -386,33 +386,45 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex justify-end space-x-3">
-            {step === 'preview' && (
-              <>
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <a
+                href="https://boardgamegeek.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Powered by BoardGameGeek
+              </a>
+            </div>
+            <div className="flex space-x-3">
+              {step === 'preview' && (
+                <>
+                  <button
+                    onClick={() => { setStep('search'); setSelectedGame(null); }}
+                    disabled={saving}
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg disabled:opacity-50"
+                  >
+                    {saving ? 'Adding Game...' : 'Add Game'}
+                  </button>
+                </>
+              )}
+              {step === 'search' && (
                 <button
-                  onClick={() => { setStep('search'); setSelectedGame(null); }}
-                  disabled={saving}
+                  onClick={handleClose}
                   className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
                 >
-                  Back
+                  Cancel
                 </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg disabled:opacity-50"
-                >
-                  {saving ? 'Adding Game...' : 'Add Game'}
-                </button>
-              </>
-            )}
-            {step === 'search' && (
-              <button
-                onClick={handleClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
-              >
-                Cancel
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
