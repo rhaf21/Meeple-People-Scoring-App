@@ -1,4 +1,5 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
 interface EmailOptions {
   to: string;
@@ -7,41 +8,57 @@ interface EmailOptions {
   text?: string;
 }
 
-// Initialize Resend client
-const getResendClient = (): Resend | null => {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY not configured. Email service will not work.');
+// Create Gmail SMTP transporter with SSL (port 465)
+const createTransporter = (): Transporter | null => {
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('Email service not configured. Set EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
     return null;
   }
-  return new Resend(process.env.RESEND_API_KEY);
+
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT || '465'),
+    secure: process.env.EMAIL_SECURE === 'true', // true for port 465 (SSL)
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    // Timeout configurations for production reliability
+    connectionTimeout: 10000, // 10 seconds to establish connection
+    greetingTimeout: 5000,    // 5 seconds for greeting
+    socketTimeout: 30000,      // 30 seconds for socket operations
+    // Connection pooling
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+  } as any);
 };
 
 /**
  * Send an email with retry logic
  */
 async function sendEmailWithRetry(
-  resend: Resend,
-  emailData: any,
+  transporter: Transporter,
+  mailOptions: any,
   retries: number = 3
 ): Promise<any> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Attempting to send email (attempt ${attempt}/${retries})...`);
-      const result = await resend.emails.send(emailData);
-      console.log(`Email sent successfully:`, result);
-      return result;
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`Email sent successfully: ${info.messageId}`);
+      return info;
     } catch (error: any) {
       console.error(`Email attempt ${attempt} failed:`, {
+        code: error.code,
+        command: error.command,
         message: error.message,
-        name: error.name,
       });
 
-      // If this was the last attempt, throw the error
       if (attempt === retries) {
         throw error;
       }
 
-      // Exponential backoff: wait 1s, 2s, 4s between retries
       const delay = Math.pow(2, attempt - 1) * 1000;
       console.log(`Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -50,29 +67,31 @@ async function sendEmailWithRetry(
 }
 
 /**
- * Send an email using Resend
+ * Send an email using Gmail SMTP with SSL
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const resend = getResendClient();
+    const transporter = createTransporter();
 
-    if (!resend) {
+    if (!transporter) {
       console.error('Email service not configured');
       return false;
     }
 
-    const emailData = {
-      from: process.env.EMAIL_FROM || 'Meeple People <onboarding@resend.dev>',
+    const mailOptions = {
+      from: `"${process.env.EMAIL_FROM_NAME || 'Meeple People'}" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
-      html: options.html,
       text: options.text,
+      html: options.html,
     };
 
-    await sendEmailWithRetry(resend, emailData, 3);
+    await sendEmailWithRetry(transporter, mailOptions, 3);
     return true;
   } catch (error: any) {
     console.error('Failed to send email after all retries:', {
+      code: error.code,
+      command: error.command,
       message: error.message,
       to: options.to,
       subject: options.subject,
