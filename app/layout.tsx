@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 
 const nunitoSans = Nunito_Sans({
   variable: "--font-nunito-sans",
@@ -28,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
+      <head suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -47,7 +48,9 @@ export default function RootLayout({
       <body
         className={`${nunitoSans.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

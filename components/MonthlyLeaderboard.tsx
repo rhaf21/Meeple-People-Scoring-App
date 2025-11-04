@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface PlayerStats {
   _id: string;
@@ -287,7 +288,7 @@ export default function MonthlyLeaderboard({ overallData, players }: MonthlyLead
                     {index > 2 && `#${index + 1}`}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-3">
+                    <Link href={`/players/${player._id}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                       <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600">
                         <Image
                           src={player.playerPhoto || getPlayerPhoto(player.playerName)}
@@ -296,10 +297,10 @@ export default function MonthlyLeaderboard({ overallData, players }: MonthlyLead
                           className="object-cover"
                         />
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
                         {player.playerName}
                       </span>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-gray-100 font-semibold">{player.totalPoints}</td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">{player.totalGames}</td>

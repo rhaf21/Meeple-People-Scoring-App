@@ -126,7 +126,7 @@ export async function getOverallLeaderboard(limit: number = 10) {
   return await PlayerStats.find()
     .sort({ 'overall.totalPoints': -1 })
     .limit(limit)
-    .select('playerName overall');
+    .select('playerId playerName overall');
 }
 
 /**

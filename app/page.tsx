@@ -7,9 +7,11 @@ import Navigation from '@/components/Navigation';
 import PlayerAwards from '@/components/PlayerAwards';
 import BestPlayerPerGame from '@/components/BestPlayerPerGame';
 import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
+import UpcomingGameNights from '@/components/UpcomingGameNights';
 
 interface PlayerStats {
   _id: string;
+  playerId?: string;
   playerName: string;
   overall: {
     totalGames: number;
@@ -99,55 +101,71 @@ export default function Dashboard() {
               <p className="mt-2 text-gray-700 dark:text-gray-300">Loading...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Leaderboard with Monthly View */}
-              <MonthlyLeaderboard
-                overallData={leaderboard.map(p => ({
-                  _id: p._id,
-                  playerName: p.playerName,
-                  playerPhoto: getPlayerPhoto(p.playerName),
-                  totalGames: p.overall.totalGames,
-                  totalPoints: p.overall.totalPoints,
-                  wins: p.overall.wins,
-                  winRate: p.overall.winRate,
-                }))}
-                players={players}
-              />
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Leaderboard with Monthly View */}
+                <MonthlyLeaderboard
+                  overallData={leaderboard.map(p => ({
+                    _id: p.playerId || p._id,
+                    playerName: p.playerName,
+                    playerPhoto: getPlayerPhoto(p.playerName),
+                    totalGames: p.overall.totalGames,
+                    totalPoints: p.overall.totalPoints,
+                    wins: p.overall.wins,
+                    winRate: p.overall.winRate,
+                  }))}
+                  players={players}
+                />
 
-              {/* Recent Games */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-200">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Games</h2>
-                {recentGames.length === 0 ? (
-                  <p className="text-gray-700 dark:text-gray-300 text-center py-8">No games played yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {recentGames.map((session, idx) => (
-                      <div key={session._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fadeInUp" style={{animationDelay: `${0.1 * idx}s`}}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{session.gameName}</h3>
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            {new Date(session.playedAt).toLocaleDateString()}
-                          </span>
+                {/* Recent Games */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-200">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Games</h2>
+                  {recentGames.length === 0 ? (
+                    <p className="text-gray-700 dark:text-gray-300 text-center py-8">No games played yet.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentGames.map((session, idx) => (
+                        <div key={session._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fadeInUp" style={{animationDelay: `${0.1 * idx}s`}}>
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{session.gameName}</h3>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                              {new Date(session.playedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                            {session.results.slice(0, 3).map((result, idx) => {
+                              const player = players.find(p => p.name === result.playerName);
+                              return (
+                                <div key={idx} className="flex justify-between">
+                                  <span>
+                                    {idx === 0 && '🥇 '}
+                                    {idx === 1 && '🥈 '}
+                                    {idx === 2 && '🥉 '}
+                                    {player ? (
+                                      <Link href={`/players/${player._id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                                        {result.playerName}
+                                      </Link>
+                                    ) : (
+                                      result.playerName
+                                    )}
+                                  </span>
+                                  <span className="font-medium">{result.pointsEarned} pts</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                          {session.results.slice(0, 3).map((result, idx) => (
-                            <div key={idx} className="flex justify-between">
-                              <span>
-                                {idx === 0 && '🥇 '}
-                                {idx === 1 && '🥈 '}
-                                {idx === 2 && '🥉 '}
-                                {result.playerName}
-                              </span>
-                              <span className="font-medium">{result.pointsEarned} pts</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+
+              {/* Upcoming Game Nights */}
+              <div className="mt-6">
+                <UpcomingGameNights />
+              </div>
+            </>
           )}
 
           {/* Quick Actions */}

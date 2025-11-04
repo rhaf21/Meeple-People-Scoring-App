@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import ImageUpload from '@/components/ImageUpload';
+import AuthModal from '@/components/AuthModal';
 
 interface Player {
   _id: string;
@@ -11,6 +13,7 @@ interface Player {
   photoUrl?: string;
   photoPublicId?: string;
   isActive: boolean;
+  profileClaimed: boolean;
   createdAt: string;
   lastPlayedAt?: string;
 }
@@ -26,6 +29,11 @@ export default function PlayersPage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [claimingPlayerId, setClaimingPlayerId] = useState<string | undefined>(undefined);
+  const [claimingPlayerName, setClaimingPlayerName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchPlayers();
@@ -129,6 +137,20 @@ export default function PlayersPage() {
     }
   }
 
+  function openClaimModal(player: Player) {
+    setClaimingPlayerId(player._id);
+    setClaimingPlayerName(player.name);
+    setIsAuthModalOpen(true);
+  }
+
+  function handleAuthModalClose() {
+    setIsAuthModalOpen(false);
+    setClaimingPlayerId(undefined);
+    setClaimingPlayerName(undefined);
+    // Refresh players to update claimed status
+    fetchPlayers();
+  }
+
   // Treat players without isActive field as active (for backward compatibility)
   const filteredPlayers = players.filter((p) =>
     activeTab === 'active' ? (p.isActive !== false) : (p.isActive === false)
@@ -189,6 +211,7 @@ export default function PlayersPage() {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Photo</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Last Played</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Created</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -207,7 +230,28 @@ export default function PlayersPage() {
                             />
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{player.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Link
+                            href={`/players/${player._id}`}
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                          >
+                            {player.name}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {player.profileClaimed ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Claimed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                              Unclaimed
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                           {player.lastPlayedAt ? new Date(player.lastPlayedAt).toLocaleDateString() : 'Never'}
                         </td>
@@ -215,12 +259,14 @@ export default function PlayersPage() {
                           {new Date(player.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <button
-                            onClick={() => openEditModal(player)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            Edit
-                          </button>
+                          {!player.profileClaimed && (
+                            <button
+                              onClick={() => openClaimModal(player)}
+                              className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-semibold"
+                            >
+                              Claim Profile
+                            </button>
+                          )}
                           <button
                             onClick={() => handleArchiveRestore(player)}
                             className={
@@ -304,6 +350,14 @@ export default function PlayersPage() {
           </div>
         </div>
       )}
+
+      {/* Auth Modal for Claiming Profiles */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={handleAuthModalClose}
+        playerIdForClaim={claimingPlayerId}
+        playerNameForClaim={claimingPlayerName}
+      />
     </div>
   );
 }

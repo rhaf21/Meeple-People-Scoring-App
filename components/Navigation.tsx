@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import UserMenu from './UserMenu';
+import AuthModal from './AuthModal';
 
 export default function Navigation() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [upcomingGameNightsCount, setUpcomingGameNightsCount] = useState(0);
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
@@ -21,6 +27,28 @@ export default function Navigation() {
       document.documentElement.classList.remove('dark');
     }
   }, []);
+
+  // Fetch upcoming game nights count
+  useEffect(() => {
+    fetchUpcomingGameNights();
+  }, []);
+
+  const fetchUpcomingGameNights = async () => {
+    try {
+      const response = await fetch('/api/game-nights');
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        const now = new Date();
+        const upcoming = data.filter((gn: any) =>
+          new Date(gn.scheduledDate) >= now && gn.status !== 'cancelled'
+        );
+        setUpcomingGameNightsCount(upcoming.length);
+      }
+    } catch (error) {
+      console.error('Failed to fetch game nights:', error);
+    }
+  };
 
   const toggleDarkMode = () => {
     console.log('Toggle dark mode clicked, current mode:', isDarkMode);
@@ -43,6 +71,7 @@ export default function Navigation() {
     { href: '/', label: 'Dashboard' },
     { href: '/players', label: 'Players' },
     { href: '/games', label: 'Games' },
+    { href: '/game-nights', label: 'Game Nights' },
     { href: '/wheel', label: 'Wheel' },
     { href: '/history', label: 'History' },
   ];
@@ -61,13 +90,18 @@ export default function Navigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors relative ${
                   isActive(item.href)
                     ? 'border-blue-500 text-gray-900 dark:text-gray-100'
                     : 'border-transparent text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {item.label}
+                {item.href === '/game-nights' && upcomingGameNightsCount > 0 && !pathname.startsWith('/game-nights') && (
+                  <span className="ml-1.5 inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold leading-none text-white bg-green-600 dark:bg-green-500 rounded-full animate-fast-pulse-glow">
+                    {upcomingGameNightsCount}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -91,7 +125,7 @@ export default function Navigation() {
             </button>
           </div>
 
-          {/* Right side: Record Game CTA + Theme Toggle */}
+          {/* Right side: Record Game CTA + Auth + Theme Toggle */}
           <div className="flex items-center space-x-3">
             {/* Record Game CTA - Always visible */}
             <Link
@@ -108,6 +142,23 @@ export default function Navigation() {
               <span className="hidden sm:inline">Record Game</span>
               <span className="sm:hidden">Record</span>
             </Link>
+
+            {/* Auth UI */}
+            {!loading && (
+              user ? (
+                <UserMenu />
+              ) : (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="hidden sm:inline">Login</span>
+                </button>
+              )
+            )}
 
             {/* Theme Toggle Button */}
             <button
@@ -136,18 +187,26 @@ export default function Navigation() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                className={`flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${
                   isActive(item.href)
                     ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {item.label}
+                {item.href === '/game-nights' && upcomingGameNightsCount > 0 && !pathname.startsWith('/game-nights') && (
+                  <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold leading-none text-white bg-green-600 dark:bg-green-500 rounded-full animate-fast-pulse-glow">
+                    {upcomingGameNightsCount}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
         )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </nav>
   );
 }

@@ -233,3 +233,26 @@ a,
 .page-transition {
   animation: fadeInUp 0.5s ease-out;
 }
+
+/* Game Night Badge Animation - Fast Pulse with Glow */
+@keyframes fastPulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.8), 0 0 16px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 1), 0 0 24px rgba(34, 197, 94, 0.6);
+  }
+}
+
+.animate-fast-pulse-glow {
+  animation: fastPulseGlow 0.8s ease-in-out infinite;
+}
+
+/* Enhanced glow for dark mode */
+:where(.dark) .animate-fast-pulse-glow {
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.9), 0 0 20px rgba(34, 197, 94, 0.5);
+}

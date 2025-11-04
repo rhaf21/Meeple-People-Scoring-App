@@ -74,14 +74,18 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.totalPoints - a.totalPoints)
       .slice(0, limit);
 
-    // Fetch player photos
+    // Fetch player photos and correct IDs
     const playerIds = leaderboard.map((p) => p._id);
     const players = await Player.find({ _id: { $in: playerIds } });
-    const playerPhotoMap = new Map(players.map((p) => [p._id.toString(), p.photoUrl]));
+    const playerMap = new Map(players.map((p) => [p._id.toString(), { photoUrl: p.photoUrl, id: p._id.toString() }]));
 
-    // Add photos to leaderboard
+    // Add photos to leaderboard and ensure correct _id
     leaderboard.forEach((player) => {
-      player.playerPhoto = playerPhotoMap.get(player._id);
+      const playerData = playerMap.get(player._id);
+      if (playerData) {
+        player.playerPhoto = playerData.photoUrl;
+        player._id = playerData.id; // Ensure _id is correct Player document ID
+      }
     });
 
     return NextResponse.json(leaderboard);
