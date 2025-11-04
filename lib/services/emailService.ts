@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
 interface EmailOptions {
   to: string;
@@ -7,8 +8,8 @@ interface EmailOptions {
   text?: string;
 }
 
-// Create reusable transporter
-const createTransporter = () => {
+// Create reusable transporter with robust timeout and pooling configuration
+const createTransporter = (): Transporter | null => {
   // Check if email credentials are configured
   if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.warn('Email service not configured. Set EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
@@ -23,8 +24,50 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-  });
+    // Timeout configurations for production reliability
+    connectionTimeout: 10000, // 10 seconds to establish connection
+    greetingTimeout: 5000,    // 5 seconds for greeting
+    socketTimeout: 30000,      // 30 seconds for socket operations
+    // Connection pooling for better performance
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+  } as any); // Type assertion needed for nodemailer's flexible config
 };
+
+/**
+ * Send an email with retry logic
+ */
+async function sendEmailWithRetry(
+  transporter: Transporter,
+  mailOptions: any,
+  retries: number = 3
+): Promise<any> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`Attempting to send email (attempt ${attempt}/${retries})...`);
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`Email sent successfully: ${info.messageId}`);
+      return info;
+    } catch (error: any) {
+      console.error(`Email attempt ${attempt} failed:`, {
+        code: error.code,
+        command: error.command,
+        message: error.message,
+      });
+
+      // If this was the last attempt, throw the error
+      if (attempt === retries) {
+        throw error;
+      }
+
+      // Exponential backoff: wait 1s, 2s, 4s between retries
+      const delay = Math.pow(2, attempt - 1) * 1000;
+      console.log(`Waiting ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
 
 /**
  * Send an email
@@ -38,18 +81,24 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       return false;
     }
 
-    const info = await transporter.sendMail({
+    const mailOptions = {
       from: `"${process.env.EMAIL_FROM_NAME || 'Meeple People'}" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
       text: options.text,
       html: options.html,
-    });
+    };
 
-    console.log('Email sent: %s', info.messageId);
+    await sendEmailWithRetry(transporter, mailOptions, 3);
     return true;
-  } catch (error) {
-    console.error('Error sending email:', error);
+  } catch (error: any) {
+    console.error('Failed to send email after all retries:', {
+      code: error.code,
+      command: error.command,
+      message: error.message,
+      to: options.to,
+      subject: options.subject,
+    });
     return false;
   }
 }
