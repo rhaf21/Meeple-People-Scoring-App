@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameDefinition from '@/lib/models/GameDefinition';
+import { requireAdmin, requireUser } from '@/lib/middleware/authMiddleware';
 
 // GET all games
 export async function GET(request: NextRequest) {
@@ -25,9 +26,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new game
+// POST create new game (authenticated users)
 export async function POST(request: NextRequest) {
   try {
+    // Require user authentication
+    const authResult = await requireUser(request);
+    if (authResult instanceof NextResponse) return authResult;
+
     await connectDB();
     const body = await request.json();
     const {

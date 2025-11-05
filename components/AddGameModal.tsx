@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api/client';
+import { BGGGameDetails } from '@/lib/services/bggService';
 
 interface AddGameModalProps {
   isOpen: boolean;
@@ -15,24 +16,6 @@ interface BGGGame {
   name: string;
   yearPublished?: number;
   type: string;
-}
-
-interface BGGGameDetails {
-  id: number;
-  name: string;
-  description: string;
-  imageUrl?: string;
-  thumbnailUrl?: string;
-  yearPublished?: number;
-  minPlayers?: number;
-  maxPlayers?: number;
-  playingTime?: number;
-  designers: string[];
-  categories: string[];
-  mechanics: string[];
-  bggRating?: number;
-  bggAverageWeight?: number;
-  bggUrl?: string;
 }
 
 type Step = 'search' | 'preview' | 'configure';
@@ -102,43 +85,32 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
     setError('');
 
     try {
-      const res = await fetch('/api/games', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: selectedGame.name,
-          scoringMode,
-          pointsPerPlayer,
-          // BGG data
-          bggId: selectedGame.id,
-          description: selectedGame.description,
-          yearPublished: selectedGame.yearPublished,
-          minPlayers: selectedGame.minPlayers,
-          maxPlayers: selectedGame.maxPlayers,
-          playingTime: selectedGame.playingTime,
-          designers: selectedGame.designers,
-          categories: selectedGame.categories,
-          mechanics: selectedGame.mechanics,
-          bggRating: selectedGame.bggRating,
-          bggAverageWeight: selectedGame.bggAverageWeight,
-          imageUrl: selectedGame.imageUrl,
-          thumbnailUrl: selectedGame.thumbnailUrl,
-          bggUrl: selectedGame.bggUrl,
-        }),
+      const data = await api.createGame({
+        name: selectedGame.name,
+        scoringMode,
+        pointsPerPlayer,
+        // BGG data
+        bggId: selectedGame.id,
+        description: selectedGame.description,
+        yearPublished: selectedGame.yearPublished,
+        minPlayers: selectedGame.minPlayers,
+        maxPlayers: selectedGame.maxPlayers,
+        playingTime: selectedGame.playingTime,
+        designers: selectedGame.designers,
+        categories: selectedGame.categories,
+        mechanics: selectedGame.mechanics,
+        bggRating: selectedGame.bggRating,
+        bggAverageWeight: selectedGame.bggAverageWeight,
+        imageUrl: selectedGame.imageUrl,
+        thumbnailUrl: selectedGame.thumbnailUrl,
+        bggUrl: selectedGame.bggUrl,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to add game');
-        return;
-      }
 
       // Reset and close
       handleClose();
-      onGameAdded(data._id);
-    } catch (error) {
-      setError('Failed to add game');
+      onGameAdded((data as any)._id);
+    } catch (error: any) {
+      setError(error.message || 'Failed to add game');
     } finally {
       setSaving(false);
     }
@@ -165,7 +137,7 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-2xl text-gray-900 dark:text-gray-100">
               {step === 'search' && 'Search BoardGameGeek'}
               {step === 'preview' && 'Game Details'}
               {step === 'configure' && 'Configure Scoring'}
@@ -271,7 +243,7 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
                   </div>
                 )}
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-xl text-gray-900 dark:text-gray-100">
                     {selectedGame.name}
                   </h3>
                   {selectedGame.yearPublished && (
@@ -303,7 +275,7 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
                     </p>
                   </div>
                 )}
-                {selectedGame.bggRating && (
+                {typeof selectedGame.bggRating === 'number' && (
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                     <p className="text-xs text-gray-600 dark:text-gray-400">BGG Rating</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -311,7 +283,7 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
                     </p>
                   </div>
                 )}
-                {selectedGame.bggAverageWeight && (
+                {typeof selectedGame.bggAverageWeight === 'number' && (
                   <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                     <p className="text-xs text-gray-600 dark:text-gray-400">Complexity</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -324,54 +296,78 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
               {/* Description */}
               {selectedGame.description && (
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Description</h4>
+                  <h4 className="text-gray-900 dark:text-gray-100 mb-2">Description</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4">
                     {selectedGame.description}
                   </p>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* Configure Scoring */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Configure Scoring</h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Scoring Mode
-                    </label>
-                    <select
-                      value={scoringMode}
-                      onChange={(e) => {
-                        const mode = e.target.value as 'pointing' | 'winner-takes-all';
-                        setScoringMode(mode);
-                        setPointsPerPlayer(mode === 'winner-takes-all' ? 3 : 5);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="pointing">Pointing System</option>
-                      <option value="winner-takes-all">Winner Takes All</option>
-                    </select>
-                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                      {scoringMode === 'pointing'
-                        ? '💡 Top 3 players earn points. 1st: 2/3 of pool, 2nd: 2/3 of remainder, 3rd: rest'
-                        : '💡 Winner gets all points, others get 0'}
+          {/* Step 3: Configure */}
+          {step === 'configure' && selectedGame && (
+            <div className="space-y-6">
+              {/* Game Summary */}
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                {selectedGame.imageUrl && (
+                  <Image
+                    src={selectedGame.imageUrl}
+                    alt={selectedGame.name}
+                    width={60}
+                    height={60}
+                    className="rounded object-cover"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    {selectedGame.name}
+                  </h3>
+                  {selectedGame.yearPublished && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedGame.yearPublished}
                     </p>
-                  </div>
+                  )}
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Points Per Player
-                    </label>
-                    <input
-                      type="number"
-                      value={pointsPerPlayer}
-                      onChange={(e) => setPointsPerPlayer(parseInt(e.target.value) || 5)}
-                      min="1"
-                      max="100"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    />
-                  </div>
+              {/* Scoring Configuration */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Scoring Mode
+                  </label>
+                  <select
+                    value={scoringMode}
+                    onChange={(e) => {
+                      const mode = e.target.value as 'pointing' | 'winner-takes-all';
+                      setScoringMode(mode);
+                      setPointsPerPlayer(mode === 'winner-takes-all' ? 3 : 5);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="pointing">Pointing System</option>
+                    <option value="winner-takes-all">Winner Takes All</option>
+                  </select>
+                  <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    {scoringMode === 'pointing'
+                      ? '💡 Top 3 players earn points. 1st: 2/3 of pool, 2nd: 2/3 of remainder, 3rd: rest'
+                      : '💡 Winner gets all points, others get 0'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Points Per Player
+                  </label>
+                  <input
+                    type="number"
+                    value={pointsPerPlayer}
+                    onChange={(e) => setPointsPerPlayer(parseInt(e.target.value) || 5)}
+                    min="1"
+                    max="100"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
                 </div>
               </div>
 
@@ -398,12 +394,36 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
               </a>
             </div>
             <div className="flex space-x-3">
+              {step === 'search' && (
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
+                >
+                  Cancel
+                </button>
+              )}
               {step === 'preview' && (
                 <>
                   <button
                     onClick={() => { setStep('search'); setSelectedGame(null); }}
-                    disabled={saving}
                     className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setStep('configure')}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg"
+                  >
+                    Next
+                  </button>
+                </>
+              )}
+              {step === 'configure' && (
+                <>
+                  <button
+                    onClick={() => setStep('preview')}
+                    disabled={saving}
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium disabled:opacity-50"
                   >
                     Back
                   </button>
@@ -415,14 +435,6 @@ export default function AddGameModal({ isOpen, onClose, onGameAdded }: AddGameMo
                     {saving ? 'Adding Game...' : 'Add Game'}
                   </button>
                 </>
-              )}
-              {step === 'search' && (
-                <button
-                  onClick={handleClose}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
-                >
-                  Cancel
-                </button>
               )}
             </div>
           </div>

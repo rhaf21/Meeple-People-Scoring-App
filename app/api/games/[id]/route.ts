@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameDefinition from '@/lib/models/GameDefinition';
+import { requireAdmin, requireUser } from '@/lib/middleware/authMiddleware';
 
 // GET game by ID
 export async function GET(
@@ -29,12 +30,16 @@ export async function GET(
   }
 }
 
-// PUT update game
+// PUT update game (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require admin authentication
+    const authResult = await requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { id } = await params;
     await connectDB();
     const body = await request.json();
@@ -106,19 +111,18 @@ export async function PUT(
   }
 }
 
-// DELETE game (soft delete by setting isActive to false)
+// DELETE game (authenticated users - permanently removes from database)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require user authentication
+    const authResult = await requireUser(request);
+    if (authResult instanceof NextResponse) return authResult;
     const { id } = await params;
     await connectDB();
-    const game = await GameDefinition.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
+    const game = await GameDefinition.findByIdAndDelete(id);
 
     if (!game) {
       return NextResponse.json(
@@ -128,7 +132,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({
-      message: 'Game deactivated successfully',
+      message: 'Game deleted successfully',
       game
     });
   } catch (error) {

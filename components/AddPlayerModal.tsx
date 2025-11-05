@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import ImageUpload from './ImageUpload';
+import { api } from '@/lib/api/client';
 
 interface AddPlayerModalProps {
   isOpen: boolean;
@@ -31,22 +32,11 @@ export default function AddPlayerModal({ isOpen, onClose, onPlayerAdded }: AddPl
     setError('');
 
     try {
-      const res = await fetch('/api/players', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: playerName,
-          photoUrl,
-          photoPublicId,
-        }),
+      const data = await api.createPlayer({
+        name: playerName,
+        photoUrl,
+        photoPublicId,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to add player');
-        return;
-      }
 
       // Reset form
       setPlayerName('');
@@ -55,10 +45,10 @@ export default function AddPlayerModal({ isOpen, onClose, onPlayerAdded }: AddPl
       setError('');
 
       // Notify parent with new player ID
-      onPlayerAdded(data._id);
+      onPlayerAdded((data as any)._id);
       onClose();
-    } catch (error) {
-      setError('Failed to add player');
+    } catch (error: any) {
+      setError(error.message || 'Failed to add player');
     } finally {
       setSaving(false);
     }
@@ -79,7 +69,7 @@ export default function AddPlayerModal({ isOpen, onClose, onPlayerAdded }: AddPl
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
           Add Player
         </h2>
 

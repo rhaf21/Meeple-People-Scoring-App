@@ -134,7 +134,7 @@ export const api = {
     apiClient.get(`/api/players/${id}`),
 
   getPlayerProfile: (id: string) =>
-    apiClient.get(`/api/players/${id}/profile`),
+    apiClient.get(`/api/players/${id}/profile`, true),
 
   updatePlayerProfile: (id: string, data: any) =>
     apiClient.put(`/api/players/${id}/profile`, data, true),
@@ -150,8 +150,25 @@ export const api = {
   getGames: () =>
     apiClient.get('/api/games'),
 
+  getGame: (id: string) =>
+    apiClient.get(`/api/games/${id}`),
+
   createGame: (data: any) =>
-    apiClient.post('/api/games', data),
+    apiClient.post('/api/games', data, true),
+
+  updateGame: (id: string, data: any) =>
+    apiClient.put(`/api/games/${id}`, data, true),
+
+  deleteGame: (id: string) =>
+    apiClient.delete(`/api/games/${id}`, true),
+
+  // Player endpoints
+  createPlayer: (data: any) =>
+    apiClient.post('/api/players', data, true),
+
+  // Session endpoints
+  createSession: (data: any) =>
+    apiClient.post('/api/sessions', data, true),
 
   // Game Night endpoints
   getGameNights: (params?: { status?: string; upcoming?: boolean; playerId?: string }) => {

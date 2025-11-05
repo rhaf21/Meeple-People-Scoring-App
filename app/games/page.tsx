@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import ImageUpload from '@/components/ImageUpload';
+import AddGameModal from '@/components/AddGameModal';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { api } from '@/lib/api/client';
 
 interface Game {
   _id: string;
@@ -32,6 +35,7 @@ interface Game {
 }
 
 export default function GamesPage() {
+  const { isAdmin } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -46,6 +50,9 @@ export default function GamesPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'deactivated'>('active');
   const [viewingGame, setViewingGame] = useState<Game | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [togglingGame, setTogglingGame] = useState<string | null>(null);
+  const [deletingGame, setDeletingGame] = useState<string | null>(null);
 
   useEffect(() => {
     fetchGames();
@@ -66,13 +73,6 @@ export default function GamesPage() {
   }
 
   function openAddModal() {
-    setEditingGame(null);
-    setGameName('');
-    setImageUrl(undefined);
-    setImagePublicId(undefined);
-    setScoringMode('pointing');
-    setPointsPerPlayer(5);
-    setError('');
     setShowModal(true);
   }
 
@@ -140,18 +140,36 @@ export default function GamesPage() {
       return;
     }
 
-    try {
-      const res = await fetch(`/api/games/${game._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !isCurrentlyActive }),
-      });
+    setTogglingGame(game._id);
+    setError('');
 
-      if (res.ok) {
-        fetchGames();
-      }
-    } catch (error) {
+    try {
+      await api.updateGame(game._id, { isActive: !isCurrentlyActive });
+      fetchGames();
+    } catch (error: any) {
       console.error(`Error ${action}ing game:`, error);
+      setError(error.message || `Failed to ${action} game`);
+    } finally {
+      setTogglingGame(null);
+    }
+  }
+
+  async function handleDelete(game: Game) {
+    if (!confirm(`Are you sure you want to permanently delete ${game.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingGame(game._id);
+    setError('');
+
+    try {
+      await api.deleteGame(game._id);
+      fetchGames();
+    } catch (error: any) {
+      console.error('Error deleting game:', error);
+      setError(error.message || 'Failed to delete game');
+    } finally {
+      setDeletingGame(null);
     }
   }
 
@@ -168,13 +186,18 @@ export default function GamesPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Games</h1>
-            <button
-              onClick={openAddModal}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              Add Game
-            </button>
+            <h1 className="text-3xl text-gray-900 dark:text-gray-100">Games</h1>
+            {isAdmin && (
+              <button
+                onClick={openAddModal}
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search BGG Game
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
@@ -202,6 +225,13 @@ export default function GamesPage() {
               </button>
             </nav>
           </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-12">
@@ -252,28 +282,48 @@ export default function GamesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">{game.pointsPerPlayer}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(game);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleActive(game);
-                            }}
-                            className={
-                              game.isActive !== false
-                                ? 'text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300'
-                                : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'
-                            }
-                          >
-                            {game.isActive !== false ? 'Deactivate' : 'Activate'}
-                          </button>
+                          {/* Admin-only actions */}
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditModal(game);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleActive(game);
+                                }}
+                                disabled={togglingGame === game._id}
+                                className={`${
+                                  game.isActive !== false
+                                    ? 'text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300'
+                                    : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                {togglingGame === game._id
+                                  ? 'Processing...'
+                                  : game.isActive !== false ? 'Deactivate' : 'Activate'}
+                              </button>
+                              {game.isActive === false && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(game);
+                                  }}
+                                  disabled={deletingGame === game._id}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {deletingGame === game._id ? 'Deleting...' : 'Delete'}
+                                </button>
+                              )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -293,12 +343,22 @@ export default function GamesPage() {
         </div>
       </main>
 
-      {/* Edit/Add Modal */}
-      {showModal && (
+      {/* Add Game Modal (BGG Search) */}
+      <AddGameModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onGameAdded={() => {
+          setShowModal(false);
+          fetchGames();
+        }}
+      />
+
+      {/* Edit Game Modal */}
+      {editingGame && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              {editingGame ? 'Edit Game' : 'Add Game'}
+            <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
+              Edit Game
             </h2>
 
             <div className="space-y-4">
@@ -374,7 +434,7 @@ export default function GamesPage() {
 
             <div className="flex justify-end space-x-3 mt-6">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setEditingGame(null)}
                 disabled={saving}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium"
               >
@@ -408,7 +468,7 @@ export default function GamesPage() {
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-2xl text-gray-900 dark:text-gray-100">
                     {viewingGame.name}
                   </h2>
                   {viewingGame.yearPublished && (
@@ -416,10 +476,23 @@ export default function GamesPage() {
                       Published: {viewingGame.yearPublished}
                     </p>
                   )}
+                  {/* Scoring Badge */}
+                  <div className="mt-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      viewingGame.scoringMode === 'pointing'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                    }`}>
+                      {viewingGame.scoringMode === 'pointing' ? 'Pointing' : 'Winner Takes All'} ({viewingGame.pointsPerPlayer} pts/player)
+                    </span>
+                  </div>
                 </div>
               </div>
               <button
-                onClick={() => setShowDetailsModal(false)}
+                onClick={() => {
+                  setShowDetailsModal(false);
+                  setShowFullDescription(false);
+                }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -433,12 +506,28 @@ export default function GamesPage() {
               {/* Description */}
               {viewingGame.description && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
                     Description
                   </h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {viewingGame.description.replace(/<[^>]*>/g, '')}
-                  </p>
+                  {viewingGame.description.length > 300 ? (
+                    <>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {showFullDescription
+                          ? viewingGame.description
+                          : `${viewingGame.description.substring(0, 300)}...`}
+                      </p>
+                      <button
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {showFullDescription ? 'Show Less' : 'Read More'}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {viewingGame.description}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -481,34 +570,10 @@ export default function GamesPage() {
                 )}
               </div>
 
-              {/* Scoring Configuration */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Scoring Configuration
-                </h3>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      viewingGame.scoringMode === 'pointing'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                    }`}>
-                      {viewingGame.scoringMode === 'pointing' ? 'Pointing System' : 'Winner Takes All'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Points Per Player</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      {viewingGame.pointsPerPlayer}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {/* Designers */}
               {viewingGame.designers && viewingGame.designers.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
                     Designers
                   </h3>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -520,7 +585,7 @@ export default function GamesPage() {
               {/* Categories */}
               {viewingGame.categories && viewingGame.categories.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
                     Categories
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -539,7 +604,7 @@ export default function GamesPage() {
               {/* Mechanics */}
               {viewingGame.mechanics && viewingGame.mechanics.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
                     Mechanics
                   </h3>
                   <div className="flex flex-wrap gap-2">
