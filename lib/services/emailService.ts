@@ -1,6 +1,3 @@
-// @ts-ignore - Elastic Email client doesn't have type definitions
-import * as ElasticEmail from '@elasticemail/elasticemail-client';
-
 interface EmailOptions {
   to: string;
   subject: string;
@@ -8,38 +5,36 @@ interface EmailOptions {
   text?: string;
 }
 
-// Initialize Elastic Email client
-const getElasticClient = () => {
-  if (!process.env.ELASTIC_API_KEY) {
-    console.warn('ELASTIC_API_KEY not configured. Email service will not work.');
-    return null;
-  }
-
-  const defaultClient = ElasticEmail.ApiClient.instance;
-  const apikey = defaultClient.authentications['apikey'];
-  apikey.apiKey = process.env.ELASTIC_API_KEY;
-
-  return new ElasticEmail.EmailsApi();
-};
-
 /**
- * Send an email with retry logic using Elastic Email
+ * Send an email with retry logic using Elastic Email REST API
  */
 async function sendEmailWithRetry(
-  emailsApi: any,
   emailData: any,
   retries: number = 3
 ): Promise<any> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Attempting to send email (attempt ${attempt}/${retries})...`);
-      const result = await emailsApi.emailsPost(emailData);
+
+      const response = await fetch('https://api.elasticemail.com/v2/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(emailData).toString(),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Elastic Email API error (${response.status}): ${errorText}`);
+      }
+
+      const result = await response.json();
       console.log(`Email sent successfully:`, result);
       return result;
     } catch (error: any) {
       console.error(`Email attempt ${attempt} failed:`, {
         message: error.message,
-        status: error.status,
       });
 
       if (attempt === retries) {
@@ -54,45 +49,29 @@ async function sendEmailWithRetry(
 }
 
 /**
- * Send an email using Elastic Email HTTP API
+ * Send an email using Elastic Email REST API
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const emailsApi = getElasticClient();
-
-    if (!emailsApi) {
-      console.error('Email service not configured');
+    if (!process.env.ELASTIC_API_KEY) {
+      console.error('ELASTIC_API_KEY not configured');
       return false;
     }
 
-    const emailMessageData = ElasticEmail.EmailMessageData.constructFromObject({
-      Recipients: [
-        ElasticEmail.EmailRecipient.constructFromObject({
-          Email: options.to,
-        })
-      ],
-      Content: {
-        Body: [
-          ElasticEmail.BodyPart.constructFromObject({
-            ContentType: 'HTML',
-            Content: options.html,
-          }),
-          ...(options.text ? [ElasticEmail.BodyPart.constructFromObject({
-            ContentType: 'PlainText',
-            Content: options.text,
-          })] : []),
-        ],
-        From: process.env.EMAIL_FROM || 'Meeple People <noreply@yourdomain.com>',
-        Subject: options.subject,
-      }
-    });
+    const emailData = {
+      apikey: process.env.ELASTIC_API_KEY,
+      from: process.env.EMAIL_FROM || 'Meeple People <noreply@yourdomain.com>',
+      to: options.to,
+      subject: options.subject,
+      bodyHtml: options.html,
+      bodyText: options.text || '',
+    };
 
-    await sendEmailWithRetry(emailsApi, emailMessageData, 3);
+    await sendEmailWithRetry(emailData, 3);
     return true;
   } catch (error: any) {
     console.error('Failed to send email after all retries:', {
       message: error.message,
-      status: error.status,
       to: options.to,
       subject: options.subject,
     });

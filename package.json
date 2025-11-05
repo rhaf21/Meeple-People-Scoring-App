@@ -10,7 +10,6 @@
     "migrate:bgg": "tsx scripts/migrate-bgg-data.ts"
   },
   "dependencies": {
-    "@elasticemail/elasticemail-client": "^4.0.26",
     "cloudinary": "^2.8.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
