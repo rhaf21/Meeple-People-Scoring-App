@@ -1,3 +1,5 @@
+import { Resend } from 'resend';
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -6,77 +8,67 @@ interface EmailOptions {
 }
 
 /**
- * Send an email with retry logic using Elastic Email REST API
+ * Get or create Resend client instance
  */
-async function sendEmailWithRetry(
-  emailData: any,
-  retries: number = 3
-): Promise<any> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`Attempting to send email (attempt ${attempt}/${retries})...`);
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY not configured');
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
-      const response = await fetch('https://api.elasticemail.com/v2/email/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(emailData).toString(),
+/**
+ * Send an email using Resend with retry logic
+ */
+export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  const resend = getResendClient();
+
+  if (!resend) {
+    console.error('Resend client not initialized');
+    return false;
+  }
+
+  const maxRetries = 3;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempting to send email (attempt ${attempt}/${maxRetries})...`);
+
+      const { data, error } = await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'Meeple People <noreply@fartymeople.com>',
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Elastic Email API error (${response.status}): ${errorText}`);
+      if (error) {
+        throw new Error(`Resend API error: ${error.message}`);
       }
 
-      const result = await response.json();
-      console.log(`Email sent successfully:`, result);
-      return result;
+      console.log('Email sent successfully:', data);
+      return true;
     } catch (error: any) {
       console.error(`Email attempt ${attempt} failed:`, {
         message: error.message,
+        to: options.to,
+        subject: options.subject,
       });
 
-      if (attempt === retries) {
-        throw error;
+      if (attempt === maxRetries) {
+        console.error('Failed to send email after all retries');
+        return false;
       }
 
+      // Exponential backoff
       const delay = Math.pow(2, attempt - 1) * 1000;
       console.log(`Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-}
 
-/**
- * Send an email using Elastic Email REST API
- */
-export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  try {
-    if (!process.env.ELASTIC_API_KEY) {
-      console.error('ELASTIC_API_KEY not configured');
-      return false;
-    }
-
-    const emailData = {
-      apikey: process.env.ELASTIC_API_KEY,
-      from: process.env.EMAIL_FROM || 'Meeple People <noreply@yourdomain.com>',
-      to: options.to,
-      subject: options.subject,
-      bodyHtml: options.html,
-      bodyText: options.text || '',
-    };
-
-    await sendEmailWithRetry(emailData, 3);
-    return true;
-  } catch (error: any) {
-    console.error('Failed to send email after all retries:', {
-      message: error.message,
-      to: options.to,
-      subject: options.subject,
-    });
-    return false;
-  }
+  return false;
 }
 
 /**
