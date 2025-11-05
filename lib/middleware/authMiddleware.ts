@@ -71,3 +71,85 @@ export async function optionalAuth(request: NextRequest): Promise<JWTPayload | n
 export function isResourceOwner(user: JWTPayload, resourceOwnerId: string): boolean {
   return user.playerId === resourceOwnerId;
 }
+
+/**
+ * Middleware to require authentication AND admin role
+ * Usage in API routes:
+ *
+ * export async function POST(request: NextRequest) {
+ *   const authResult = await requireAdmin(request);
+ *   if (authResult instanceof NextResponse) return authResult;
+ *
+ *   const user = authResult;
+ *   // ... rest of your admin-only route logic
+ * }
+ */
+export async function requireAdmin(request: NextRequest): Promise<JWTPayload | NextResponse> {
+  try {
+    // First, verify authentication
+    const authResult = await requireAuth(request);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const user = authResult;
+
+    // Check if user has admin role
+    if (user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    return user;
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Unauthorized - Invalid token' },
+      { status: 401 }
+    );
+  }
+}
+
+/**
+ * Middleware to require authentication (any logged-in user: admin or user role)
+ * Usage in API routes:
+ *
+ * export async function POST(request: NextRequest) {
+ *   const authResult = await requireUser(request);
+ *   if (authResult instanceof NextResponse) return authResult;
+ *
+ *   const user = authResult;
+ *   // ... rest of your user route logic
+ * }
+ */
+export async function requireUser(request: NextRequest): Promise<JWTPayload | NextResponse> {
+  try {
+    // Verify authentication
+    const authResult = await requireAuth(request);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const user = authResult;
+
+    // Check if user has user or admin role (not guest)
+    if (user.role !== 'admin' && user.role !== 'user') {
+      return NextResponse.json(
+        { error: 'Forbidden - User access required' },
+        { status: 403 }
+      );
+    }
+
+    return user;
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Unauthorized - Invalid token' },
+      { status: 401 }
+    );
+  }
+}
+
+/**
+ * Check if the authenticated user is an admin or owns the resource
+ * Returns true if user is admin or owner, false otherwise
+ */
+export function isAdminOrOwner(user: JWTPayload, resourceOwnerId: string): boolean {
+  return user.role === 'admin' || user.playerId === resourceOwnerId;
+}

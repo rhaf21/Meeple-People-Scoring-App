@@ -121,7 +121,7 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 z-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-2xl text-gray-900 dark:text-gray-100">
               Create Game Night
             </h2>
             <button

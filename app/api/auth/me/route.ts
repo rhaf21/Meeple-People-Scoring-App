@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       showStats: player.showStats,
       profileClaimed: player.profileClaimed,
       emailVerified: player.emailVerified,
+      role: player.role,
     });
 
   } catch (error) {

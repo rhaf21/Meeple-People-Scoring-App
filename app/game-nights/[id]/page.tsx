@@ -22,10 +22,26 @@ interface Game {
   _id: string;
   name: string;
   imageUrl?: string;
-  thumbnailUrl?: string;
+  imagePublicId?: string;
+  scoringMode: 'pointing' | 'winner-takes-all';
+  pointsPerPlayer: number;
+  isActive: boolean;
+  createdAt: string;
+  // BGG fields
+  description?: string;
+  yearPublished?: number;
   minPlayers?: number;
   maxPlayers?: number;
   playingTime?: number;
+  minPlaytime?: number;
+  maxPlaytime?: number;
+  bggRating?: number;
+  bggAverageWeight?: number;
+  designers?: string[];
+  categories?: string[];
+  mechanics?: string[];
+  bggUrl?: string;
+  thumbnailUrl?: string;
 }
 
 interface GameNight {
@@ -53,6 +69,10 @@ export default function GameNightDetailPage() {
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [viewingGame, setViewingGame] = useState<Game | null>(null);
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [loadingGame, setLoadingGame] = useState(false);
 
   useEffect(() => {
     fetchGameNight();
@@ -86,6 +106,19 @@ export default function GameNightDetailPage() {
     } catch (err: any) {
       alert(err.message || 'Failed to delete game night');
       setDeleting(false);
+    }
+  };
+
+  const handleGameClick = async (gameId: string) => {
+    setLoadingGame(true);
+    try {
+      const gameData: any = await api.getGame(gameId);
+      setViewingGame(gameData);
+      setShowGameModal(true);
+    } catch (err: any) {
+      alert(err.message || 'Failed to fetch game details');
+    } finally {
+      setLoadingGame(false);
     }
   };
 
@@ -136,7 +169,7 @@ export default function GameNightDetailPage() {
         <Navigation />
         <main className="container mx-auto px-4 py-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">Error</h2>
+          <h2 className="text-xl text-red-800 dark:text-red-200 mb-2">Error</h2>
           <p className="text-red-600 dark:text-red-400">{error || 'Game night not found'}</p>
           <Link
             href="/game-nights"
@@ -176,7 +209,7 @@ export default function GameNightDetailPage() {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h1 className="text-3xl text-gray-900 dark:text-gray-100 mb-2">
               {gameNight.title}
             </h1>
             {getStatusBadge(gameNight.status)}
@@ -242,7 +275,7 @@ export default function GameNightDetailPage() {
       {/* RSVP Section */}
       {gameNight.status === 'scheduled' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
             Your RSVP
           </h2>
           {user ? (
@@ -279,14 +312,14 @@ export default function GameNightDetailPage() {
 
       {/* Attendees */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
           Attendees ({going.length + maybe.length})
         </h2>
 
         {/* Going */}
         {going.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center">
+            <h3 className="text-sm text-green-600 dark:text-green-400 mb-3 flex items-center">
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -326,7 +359,7 @@ export default function GameNightDetailPage() {
         {/* Maybe */}
         {maybe.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 mb-3 flex items-center">
+            <h3 className="text-sm text-yellow-600 dark:text-yellow-400 mb-3 flex items-center">
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
@@ -373,15 +406,16 @@ export default function GameNightDetailPage() {
       {/* Suggested Games */}
       {gameNight.suggestedGames && gameNight.suggestedGames.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
             Suggested Games
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {gameNight.suggestedGames.map((game) => (
-              <Link
+              <button
                 key={game._id}
-                href={`/games/${game._id}`}
-                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => handleGameClick(game._id)}
+                disabled={loadingGame}
+                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {game.thumbnailUrl && (
                   <Image
@@ -403,12 +437,221 @@ export default function GameNightDetailPage() {
                     </p>
                   )}
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
       )}
       </main>
+
+      {/* Game Details Modal */}
+      {showGameModal && viewingGame && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-start">
+              <div className="flex items-start space-x-4">
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0">
+                  <Image
+                    src={viewingGame.imageUrl || '/game-placeholder.svg'}
+                    alt={viewingGame.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <h2 className="text-2xl text-gray-900 dark:text-gray-100">
+                    {viewingGame.name}
+                  </h2>
+                  {viewingGame.yearPublished && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Published: {viewingGame.yearPublished}
+                    </p>
+                  )}
+                  {/* Scoring Badge */}
+                  <div className="mt-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      viewingGame.scoringMode === 'pointing'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                    }`}>
+                      {viewingGame.scoringMode === 'pointing' ? 'Pointing' : 'Winner Takes All'} ({viewingGame.pointsPerPlayer} pts/player)
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowGameModal(false);
+                  setShowFullDescription(false);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Description */}
+              {viewingGame.description && (
+                <div>
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
+                    Description
+                  </h3>
+                  {viewingGame.description.length > 300 ? (
+                    <>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {showFullDescription
+                          ? viewingGame.description
+                          : `${viewingGame.description.substring(0, 300)}...`}
+                      </p>
+                      <button
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {showFullDescription ? 'Show Less' : 'Read More'}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {viewingGame.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Game Info Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {viewingGame.minPlayers && viewingGame.maxPlayers && (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Players</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {viewingGame.minPlayers}-{viewingGame.maxPlayers}
+                    </p>
+                  </div>
+                )}
+
+                {viewingGame.playingTime && (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Playing Time</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {viewingGame.playingTime} min
+                    </p>
+                  </div>
+                )}
+
+                {viewingGame.bggRating && (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">BGG Rating</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {viewingGame.bggRating.toFixed(1)} / 10
+                    </p>
+                  </div>
+                )}
+
+                {viewingGame.bggAverageWeight && (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Complexity</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {viewingGame.bggAverageWeight.toFixed(1)} / 5
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Designers */}
+              {viewingGame.designers && viewingGame.designers.length > 0 && (
+                <div>
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
+                    Designers
+                  </h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {viewingGame.designers.join(', ')}
+                  </p>
+                </div>
+              )}
+
+              {/* Categories */}
+              {viewingGame.categories && viewingGame.categories.length > 0 && (
+                <div>
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
+                    Categories
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingGame.categories.map((category, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-medium rounded-full"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mechanics */}
+              {viewingGame.mechanics && viewingGame.mechanics.length > 0 && (
+                <div>
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 mb-2">
+                    Mechanics
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingGame.mechanics.map((mechanic, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 text-xs font-medium rounded-full"
+                      >
+                        {mechanic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* BGG Link & Attribution */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                {viewingGame.bggUrl && (
+                  <a
+                    href={viewingGame.bggUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    <span>View on BoardGameGeek</span>
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <a
+                    href="https://boardgamegeek.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    Powered by BoardGameGeek
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end">
+              <button
+                onClick={() => setShowGameModal(false)}
+                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-white font-medium rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Auth Modal */}
       <AuthModal

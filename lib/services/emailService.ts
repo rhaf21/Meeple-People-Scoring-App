@@ -36,7 +36,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       console.log(`Attempting to send email (attempt ${attempt}/${maxRetries})...`);
 
       const { data, error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'Meeple People <noreply@fartymeople.com>',
+        from: process.env.EMAIL_FROM || 'Farty Meople <noreply@fartymeople.com>',
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -75,7 +75,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
  * Send OTP email
  */
 export async function sendOTPEmail(email: string, otp: string, playerName: string): Promise<boolean> {
-  const subject = 'Your OTP for Meeple People Scoring App';
+  const subject = 'Your OTP for Farty Meople Scoring App';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -94,7 +94,7 @@ export async function sendOTPEmail(email: string, otp: string, playerName: strin
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎲 Meeple People</h1>
+          <h1>🎲 Farty Meople</h1>
           <p>Board Game Scoring App</p>
         </div>
         <div class="content">
@@ -112,7 +112,7 @@ export async function sendOTPEmail(email: string, otp: string, playerName: strin
           <p>Happy gaming! 🎮</p>
         </div>
         <div class="footer">
-          <p>Meeple People Scoring App - Track your board game victories!</p>
+          <p>Farty Meople Scoring App - Track your board game victories!</p>
         </div>
       </div>
     </body>
@@ -122,7 +122,7 @@ export async function sendOTPEmail(email: string, otp: string, playerName: strin
   const text = `
 Hello ${playerName}!
 
-You requested to claim your player profile on Meeple People Scoring App.
+You requested to claim your player profile on Farty Meople Scoring App.
 
 Your OTP is: ${otp}
 
@@ -145,7 +145,7 @@ Happy gaming!
  * Send welcome email after successful profile claim
  */
 export async function sendWelcomeEmail(email: string, playerName: string): Promise<boolean> {
-  const subject = 'Welcome to Meeple People!';
+  const subject = 'Welcome to Farty Meople!';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -162,7 +162,7 @@ export async function sendWelcomeEmail(email: string, playerName: string): Promi
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎉 Welcome to Meeple People!</h1>
+          <h1>🎉 Welcome to Farty Meople!</h1>
         </div>
         <div class="content">
           <h2>Hello ${playerName}!</h2>
@@ -193,7 +193,7 @@ export async function sendWelcomeEmail(email: string, playerName: string): Promi
           <p>Start exploring and may the dice be ever in your favor! 🎲</p>
         </div>
         <div class="footer">
-          <p>Meeple People Scoring App</p>
+          <p>Farty Meople Scoring App</p>
         </div>
       </div>
     </body>

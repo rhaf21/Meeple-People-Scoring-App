@@ -19,6 +19,7 @@ export interface IPlayer extends Document {
   otp?: string;
   otpExpiry?: Date;
   profileClaimed: boolean;
+  role: 'admin' | 'user' | 'guest';
 
   // Profile fields
   bio?: string;
@@ -99,6 +100,11 @@ const PlayerSchema = new Schema<IPlayer>(
       type: Boolean,
       default: false,
     },
+    role: {
+      type: String,
+      enum: ['admin', 'user', 'guest'],
+      default: 'user',
+    },
 
     // Profile fields
     bio: {
@@ -141,5 +147,6 @@ const PlayerSchema = new Schema<IPlayer>(
 // Indexes (name already indexed via unique: true, email indexed via unique: true)
 PlayerSchema.index({ lastPlayedAt: -1 });
 PlayerSchema.index({ isActive: 1 });
+PlayerSchema.index({ role: 1 });
 
 export default mongoose.models.Player || mongoose.model<IPlayer>('Player', PlayerSchema);

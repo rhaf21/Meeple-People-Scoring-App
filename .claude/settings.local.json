@@ -26,7 +26,12 @@
       "WebFetch(domain:stackoverflow.com)",
       "Bash(npm uninstall:*)",
       "WebFetch(domain:www.mailersend.com)",
-      "WebFetch(domain:elasticemail.com)"
+      "WebFetch(domain:elasticemail.com)",
+      "Bash(find:*)",
+      "Bash(for:*)",
+      "Bash(do sed -i 's/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-bold\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-semibold\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-black\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-extrabold\\([^\"\"]*\"\"\\)/\\1\\2/g' \"$file\")",
+      "Bash(echo:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

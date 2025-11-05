@@ -152,7 +152,7 @@ export default function AuthModal({ isOpen, onClose, playerIdForClaim, playerNam
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 animate-fadeInUp">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-2xl text-gray-900 dark:text-gray-100">
             {step === 'choose-action' && 'Welcome'}
             {step === 'select-player' && 'Select Your Profile'}
             {step === 'email' && (authMode === 'login' ? 'Login' : (playerIdForClaim ? 'Claim Profile' : `Claim as ${selectedPlayerName}`))}
@@ -400,7 +400,7 @@ export default function AuthModal({ isOpen, onClose, playerIdForClaim, playerNam
           {step === 'success' && (
             <div className="text-center py-8">
               <div className="text-6xl mb-4 animate-bounce">✅</div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-2xl text-gray-900 dark:text-gray-100 mb-2">
                 Welcome!
               </h3>
               <p className="text-gray-600 dark:text-gray-400">

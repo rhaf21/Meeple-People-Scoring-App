@@ -139,7 +139,7 @@ export default function MonthlyLeaderboard({ overallData, players }: MonthlyLead
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp">
       {/* Header with Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Leaderboard</h2>
+        <h2 className="text-xl text-gray-900 dark:text-gray-100">Leaderboard</h2>
         <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           <button
             onClick={() => setViewMode('overall')}

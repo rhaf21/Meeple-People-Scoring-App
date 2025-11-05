@@ -152,7 +152,7 @@ export default function PlayerProfilePage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">Error</h2>
+          <h2 className="text-xl text-red-800 dark:text-red-200 mb-2">Error</h2>
           <p className="text-red-600 dark:text-red-400">{error || 'Player not found'}</p>
           <Link
             href="/players"
@@ -179,26 +179,26 @@ export default function PlayerProfilePage() {
       </Link>
 
       {/* Profile Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
+        <div className="flex items-start justify-between mb-6 gap-2">
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
               {player.photoUrl ? (
                 <Image
                   src={player.photoUrl}
                   alt={player.name}
                   width={96}
                   height={96}
-                  className="object-cover"
+                  className="object-cover w-full h-full"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-4xl">
+                <div className="w-full h-full flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-3xl sm:text-4xl">
                   {player.name.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl text-gray-900 dark:text-gray-100 truncate">
                 {player.name}
               </h1>
               {player.emailVerified && (
@@ -214,6 +214,19 @@ export default function PlayerProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Edit Button */}
+          {canEdit && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg transition-colors flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span className="hidden sm:inline">Edit Profile</span>
+            </button>
+          )}
         </div>
 
         {/* Security Notice for Claimed Profiles */}
@@ -266,36 +279,6 @@ export default function PlayerProfilePage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="publicProfile"
-                  checked={editPublicProfile}
-                  onChange={(e) => setEditPublicProfile(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  disabled={saving}
-                />
-                <label htmlFor="publicProfile" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Make profile public (anyone can view)
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showStats"
-                  checked={editShowStats}
-                  onChange={(e) => setEditShowStats(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  disabled={saving}
-                />
-                <label htmlFor="showStats" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Show statistics on profile
-                </label>
-              </div>
-            </div>
-
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3">
                 <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
@@ -324,7 +307,7 @@ export default function PlayerProfilePage() {
             {/* Bio */}
             {player.bio && (
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">About</h3>
+                <h3 className="text-sm text-gray-700 dark:text-gray-300 mb-2">About</h3>
                 <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{player.bio}</p>
               </div>
             )}
@@ -332,7 +315,7 @@ export default function PlayerProfilePage() {
             {/* Play Style */}
             {player.playStyle && (
               <div className={player.bio ? 'mt-4' : 'pt-4 border-t border-gray-200 dark:border-gray-700'}>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Play Style</h3>
+                <h3 className="text-sm text-gray-700 dark:text-gray-300 mb-2">Play Style</h3>
                 <p className="text-gray-800 dark:text-gray-200">{player.playStyle}</p>
               </div>
             )}
@@ -343,7 +326,7 @@ export default function PlayerProfilePage() {
       {/* Statistics */}
       {stats && player.showStats && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Statistics</h2>
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">Statistics</h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -393,7 +376,7 @@ export default function PlayerProfilePage() {
       {/* Availability */}
       {player.availability && player.availability.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Availability</h2>
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">Availability</h2>
 
           <div className="space-y-2">
             {player.availability

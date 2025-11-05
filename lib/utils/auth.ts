@@ -8,6 +8,7 @@ export interface JWTPayload {
   playerId: string;
   email: string;
   name: string;
+  role: 'admin' | 'user' | 'guest';
 }
 
 /**

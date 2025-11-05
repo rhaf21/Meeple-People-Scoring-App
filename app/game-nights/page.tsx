@@ -115,7 +115,7 @@ export default function GameNightsPage() {
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-3xl text-gray-900 dark:text-gray-100">
             Game Nights
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -191,7 +191,7 @@ export default function GameNightsPage() {
           <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="mt-4 text-lg text-gray-900 dark:text-gray-100">
             No game nights yet
           </h3>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
@@ -225,7 +225,7 @@ export default function GameNightsPage() {
               {/* Header */}
               <div className="p-6">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-1">
+                  <h3 className="text-lg text-gray-900 dark:text-gray-100 flex-1">
                     {gameNight.title}
                   </h3>
                   <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(gameNight.status)}`}>

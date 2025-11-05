@@ -74,7 +74,7 @@ export default function WheelPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 animate-fadeIn">
+          <h1 className="text-3xl text-gray-900 dark:text-gray-100 mb-8 animate-fadeIn">
             Wheel of Games 🎡
           </h1>
 
@@ -95,7 +95,7 @@ export default function WheelPage() {
               <div className="lg:col-span-1">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    <h2 className="text-xl text-gray-900 dark:text-gray-100">
                       Select Games
                     </h2>
                     <span className="text-sm font-medium text-gray-600 dark:text-gray-400">

@@ -94,7 +94,7 @@ export default function PlayerAwards() {
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-white drop-shadow-lg flex items-center">
+                <h3 className="text-2xl text-white drop-shadow-lg flex items-center">
                   <span className="text-3xl mr-2 animate-bounce">🏆</span>
                   Player of the Week
                 </h3>
@@ -185,7 +185,7 @@ export default function PlayerAwards() {
         {awards.playerOfMonth && awards.playerOfMonth.length > 0 && (
           <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 dark:from-purple-600 dark:via-purple-700 dark:to-indigo-700 rounded-xl shadow-xl p-6 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white drop-shadow-lg flex items-center">
+              <h3 className="text-xl text-white drop-shadow-lg flex items-center">
                 <span className="text-2xl mr-2">🥇</span>
                 Player of the Month
               </h3>

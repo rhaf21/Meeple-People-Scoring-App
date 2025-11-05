@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import ImageUpload from '@/components/ImageUpload';
 import AuthModal from '@/components/AuthModal';
+import RoleBadge from '@/components/RoleBadge';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface Player {
   _id: string;
@@ -14,11 +16,13 @@ interface Player {
   photoPublicId?: string;
   isActive: boolean;
   profileClaimed: boolean;
+  role?: 'admin' | 'user' | 'guest';
   createdAt: string;
   lastPlayedAt?: string;
 }
 
 export default function PlayersPage() {
+  const { isAdmin, token } = useAuth();
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -34,6 +38,13 @@ export default function PlayersPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [claimingPlayerId, setClaimingPlayerId] = useState<string | undefined>(undefined);
   const [claimingPlayerName, setClaimingPlayerName] = useState<string | undefined>(undefined);
+
+  // Permanent delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPlayer, setDeletingPlayer] = useState<Player | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchPlayers();
@@ -125,7 +136,10 @@ export default function PlayersPage() {
     try {
       const res = await fetch(`/api/players/${player._id}`, {
         method: isCurrentlyActive ? 'DELETE' : 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: isCurrentlyActive ? undefined : JSON.stringify({ isActive: true }),
       });
 
@@ -151,6 +165,50 @@ export default function PlayersPage() {
     fetchPlayers();
   }
 
+  function openDeleteModal(player: Player) {
+    setDeletingPlayer(player);
+    setDeleteConfirmName('');
+    setDeleteError('');
+    setShowDeleteModal(true);
+  }
+
+  async function handlePermanentDelete() {
+    if (!deletingPlayer) return;
+
+    if (deleteConfirmName.trim() !== deletingPlayer.name) {
+      setDeleteError('Player name does not match. Please type the exact name to confirm.');
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      const res = await fetch(`/api/players/${deletingPlayer._id}?permanent=true`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setDeleteError(data.error || 'Failed to delete player');
+        return;
+      }
+
+      setShowDeleteModal(false);
+      setDeletingPlayer(null);
+      setDeleteConfirmName('');
+      fetchPlayers();
+    } catch (error) {
+      setDeleteError('Failed to delete player');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   // Treat players without isActive field as active (for backward compatibility)
   const filteredPlayers = players.filter((p) =>
     activeTab === 'active' ? (p.isActive !== false) : (p.isActive === false)
@@ -164,13 +222,15 @@ export default function PlayersPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Players</h1>
-            <button
-              onClick={openAddModal}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              Add Player
-            </button>
+            <h1 className="text-3xl text-gray-900 dark:text-gray-100">Players</h1>
+            {isAdmin && (
+              <button
+                onClick={openAddModal}
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Add Player
+              </button>
+            )}
           </div>
 
           {/* Tabs */}
@@ -231,12 +291,15 @@ export default function PlayersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Link
-                            href={`/players/${player._id}`}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
-                          >
-                            {player.name}
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/players/${player._id}`}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                            >
+                              {player.name}
+                            </Link>
+                            {player.role && player.role === 'admin' && <RoleBadge role={player.role} />}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {player.profileClaimed ? (
@@ -259,7 +322,8 @@ export default function PlayersPage() {
                           {new Date(player.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          {!player.profileClaimed && (
+                          {/* Only show Claim Profile in Active tab */}
+                          {activeTab === 'active' && !player.profileClaimed && (
                             <button
                               onClick={() => openClaimModal(player)}
                               className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-semibold"
@@ -267,16 +331,30 @@ export default function PlayersPage() {
                               Claim Profile
                             </button>
                           )}
-                          <button
-                            onClick={() => handleArchiveRestore(player)}
-                            className={
-                              player.isActive !== false
-                                ? 'text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300'
-                                : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'
-                            }
-                          >
-                            {player.isActive !== false ? 'Archive' : 'Restore'}
-                          </button>
+                          {/* Admin-only actions */}
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={() => handleArchiveRestore(player)}
+                                className={
+                                  player.isActive !== false
+                                    ? 'text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300'
+                                    : 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300'
+                                }
+                              >
+                                {player.isActive !== false ? 'Archive' : 'Restore'}
+                              </button>
+                              {/* Show Permanently Delete button only in Archived tab */}
+                              {activeTab === 'archived' && (
+                                <button
+                                  onClick={() => openDeleteModal(player)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-semibold"
+                                >
+                                  Permanently Delete
+                                </button>
+                              )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -300,7 +378,7 @@ export default function PlayersPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
               {editingPlayer ? 'Edit Player' : 'Add Player'}
             </h2>
 
@@ -358,6 +436,62 @@ export default function PlayersPage() {
         playerIdForClaim={claimingPlayerId}
         playerNameForClaim={claimingPlayerName}
       />
+
+      {/* Permanent Delete Confirmation Modal */}
+      {showDeleteModal && deletingPlayer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl text-red-600 dark:text-red-400 mb-4">
+              Permanently Delete Player
+            </h2>
+
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200 font-semibold mb-2">
+                Warning: This action cannot be undone!
+              </p>
+              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                <li>The player <strong>{deletingPlayer.name}</strong> will be permanently deleted</li>
+                <li>Their profile and statistics will be removed</li>
+                <li>Game history will show &quot;[Deleted Player]&quot; instead of their name</li>
+                <li>The player name will become available for reuse</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="deleteConfirmName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Type <strong>{deletingPlayer.name}</strong> to confirm:
+              </label>
+              <input
+                type="text"
+                id="deleteConfirmName"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
+                placeholder="Type player name"
+                disabled={deleting}
+              />
+              {deleteError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePermanentDelete}
+                disabled={deleting || deleteConfirmName.trim() !== deletingPlayer.name}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Deleting...' : 'Permanently Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

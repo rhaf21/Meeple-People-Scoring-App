@@ -54,9 +54,44 @@ export interface BGGGameDetails {
   publishers: string[];
   categories: string[];
   mechanics: string[];
-  rating?: number;
-  averageWeight?: number;
+  bggRating?: number;
+  bggAverageWeight?: number;
   bggUrl: string;
+}
+
+/**
+ * Decode HTML entities in text
+ */
+function decodeHTMLEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&quot;': '"',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&nbsp;': ' ',
+    '&mdash;': '\u2014',
+    '&ndash;': '\u2013',
+    '&lsquo;': '\u2018',
+    '&rsquo;': '\u2019',
+    '&ldquo;': '\u201C',
+    '&rdquo;': '\u201D',
+  };
+
+  // Replace named entities
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'g'), char);
+  }
+
+  // Replace numeric entities (&#xxx; and &#xHEX;)
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) =>
+    String.fromCharCode(parseInt(dec, 10))
+  );
+  decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+
+  return decoded;
 }
 
 /**
@@ -137,8 +172,10 @@ export async function getBGGGameDetails(bggId: number): Promise<BGGGameDetails> 
         .map((link: any) => link.$.value);
     };
 
-    // Parse description and remove HTML tags
-    const description = item.description ? item.description[0].replace(/<[^>]*>/g, '').trim() : '';
+    // Parse description, remove HTML tags, and decode HTML entities
+    const description = item.description
+      ? decodeHTMLEntities(item.description[0].replace(/<[^>]*>/g, '').trim())
+      : '';
 
     // Parse stats
     const stats = item.statistics?.[0]?.ratings?.[0];
@@ -171,8 +208,8 @@ export async function getBGGGameDetails(bggId: number): Promise<BGGGameDetails> 
       publishers: extractLinks(item.link, 'boardgamepublisher'),
       categories: extractLinks(item.link, 'boardgamecategory'),
       mechanics: extractLinks(item.link, 'boardgamemechanic'),
-      rating,
-      averageWeight,
+      bggRating: rating,
+      bggAverageWeight: averageWeight,
       bggUrl: `https://boardgamegeek.com/boardgame/${bggId}`,
     };
   } catch (error) {

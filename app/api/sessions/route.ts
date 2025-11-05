@@ -10,6 +10,7 @@ import {
   PlayerResult,
 } from '@/lib/services/scoring';
 import { recalculatePlayerStats } from '@/lib/services/stats';
+import { requireUser } from '@/lib/middleware/authMiddleware';
 
 // GET all game sessions
 export async function GET(request: NextRequest) {
@@ -40,12 +41,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new game session
+// POST create new game session (any logged-in user)
 export async function POST(request: NextRequest) {
   try {
+    // Require user authentication (admin or user role)
+    const authResult = await requireUser(request);
+    if (authResult instanceof NextResponse) return authResult;
+
     await connectDB();
     const body = await request.json();
-    const { gameId, playedAt, results, playerCount } = body;
+    const { gameId, playedAt, results, playerCount} = body;
 
     // Validate required fields
     if (!gameId) {

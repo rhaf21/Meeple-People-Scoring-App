@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
       playerId: player._id.toString(),
       email: player.email!,
       name: player.name,
+      role: player.role,
     });
 
     return NextResponse.json({

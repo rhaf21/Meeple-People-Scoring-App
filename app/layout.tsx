@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito_Sans } from "next/font/google";
+import { Nunito_Sans, Boldonse } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 
@@ -9,8 +9,14 @@ const nunitoSans = Nunito_Sans({
   weight: ["300", "400", "600", "700", "800"],
 });
 
+const boldonse = Boldonse({
+  variable: "--font-boldonse",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 export const metadata: Metadata = {
-  title: "Meeple People Scoring App",
+  title: "Farty Meople Scoring App",
   description: "Track scores and statistics for your board game sessions",
   icons: {
     icon: [
@@ -46,7 +52,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${nunitoSans.variable} antialiased`}
+        className={`${nunitoSans.variable} ${boldonse.variable} antialiased`}
       >
         <AuthProvider>
           {children}

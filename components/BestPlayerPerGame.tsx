@@ -41,7 +41,7 @@ export default function BestPlayerPerGame() {
   if (loading) {
     return (
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
+        <h2 className="text-2xl text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 animate-pulse">
@@ -58,7 +58,7 @@ export default function BestPlayerPerGame() {
   if (champions.length === 0) {
     return (
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
+        <h2 className="text-2xl text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">
             Play some games to see champions emerge! 🏆
@@ -70,7 +70,7 @@ export default function BestPlayerPerGame() {
 
   return (
     <div className="mb-8 animate-fadeIn">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
+      <h2 className="text-2xl text-gray-900 dark:text-gray-100 mb-4">Game Champions</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {champions.map((champion, idx) => (
           <div
@@ -88,7 +88,7 @@ export default function BestPlayerPerGame() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               <div className="absolute bottom-2 left-3">
-                <h3 className="text-white font-bold text-lg drop-shadow-lg">
+                <h3 className="text-white text-lg drop-shadow-lg">
                   {champion.gameName}
                 </h3>
               </div>

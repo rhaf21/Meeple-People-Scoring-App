@@ -73,7 +73,7 @@ export default function UpcomingGameNights() {
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Upcoming Game Nights</h2>
+        <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">Upcoming Game Nights</h2>
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
@@ -84,7 +84,7 @@ export default function UpcomingGameNights() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-100">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Upcoming Game Nights</h2>
+        <h2 className="text-xl text-gray-900 dark:text-gray-100">Upcoming Game Nights</h2>
         <Link
           href="/game-nights"
           className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
@@ -116,7 +116,7 @@ export default function UpcomingGameNights() {
               style={{animationDelay: `${0.1 * idx}s`}}
             >
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-2">
+                <h3 className="text-gray-900 dark:text-gray-100 flex-1 pr-2">
                   {gameNight.title}
                 </h3>
                 <span className="text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded whitespace-nowrap">

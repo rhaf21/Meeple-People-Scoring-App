@@ -10,6 +10,7 @@ import {
   PlayerResult,
 } from '@/lib/services/scoring';
 import { recalculatePlayerStats } from '@/lib/services/stats';
+import { requireAdmin } from '@/lib/middleware/authMiddleware';
 
 // GET session by ID
 export async function GET(
@@ -40,12 +41,16 @@ export async function GET(
   }
 }
 
-// PUT update game session
+// PUT update game session (admin only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require admin authentication
+    const authResult = await requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { id } = await params;
     await connectDB();
     const body = await request.json();
@@ -137,12 +142,16 @@ export async function PUT(
   }
 }
 
-// DELETE game session
+// DELETE game session (admin only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require admin authentication
+    const authResult = await requireAdmin(request);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { id } = await params;
     await connectDB();
     const session = await GameSession.findByIdAndDelete(id);

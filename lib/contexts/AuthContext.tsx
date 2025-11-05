@@ -14,12 +14,14 @@ interface User {
   showStats: boolean;
   profileClaimed: boolean;
   emailVerified: boolean;
+  role: 'admin' | 'user' | 'guest';
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAdmin: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -92,8 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Compute isAdmin based on user role
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser, checkAuth }}>
+    <AuthContext.Provider value={{ user, token, loading, isAdmin, login, logout, updateUser, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

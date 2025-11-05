@@ -18,9 +18,12 @@ interface MigrationStats {
   skipped: number;
 }
 
-async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
+async function migrateBGGData(dryRun: boolean = false, limit: number = 0, reimport: boolean = false) {
   console.log('\n🎲 BGG Data Migration Script\n');
   console.log(`Mode: ${dryRun ? '🔍 DRY RUN (no changes will be made)' : '✍️  LIVE MODE (will update database)'}\n`);
+  if (reimport) {
+    console.log('Re-import mode: Will update ALL games (including those with existing BGG data)\n');
+  }
   if (limit > 0) {
     console.log(`Limit: Processing only ${limit} game(s)\n`);
   }
@@ -37,13 +40,20 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
     await connectDB();
     console.log('✅ Connected to database\n');
 
-    // Find all games without BGG data
-    let query = GameDefinition.find({
-      $or: [
-        { bggId: { $exists: false } },
-        { bggId: null },
-      ]
-    });
+    // Find games to process
+    let query;
+    if (reimport) {
+      // Re-import all games (including those with BGG data)
+      query = GameDefinition.find({});
+    } else {
+      // Only process games without BGG data
+      query = GameDefinition.find({
+        $or: [
+          { bggId: { $exists: false } },
+          { bggId: null },
+        ]
+      });
+    }
 
     if (limit > 0) {
       query = query.limit(limit);
@@ -54,11 +64,11 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
     stats.total = games.length;
 
     if (stats.total === 0) {
-      console.log('✨ All games already have BGG data! Nothing to migrate.\n');
+      console.log(`✨ ${reimport ? 'No games found!' : 'All games already have BGG data! Nothing to migrate.'}\n`);
       return;
     }
 
-    console.log(`📋 Found ${stats.total} games without BGG data\n`);
+    console.log(`📋 Found ${stats.total} games ${reimport ? 'to re-import' : 'without BGG data'}\n`);
     console.log('─'.repeat(80));
 
     for (const game of games) {
@@ -89,7 +99,7 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
           console.log(`      - Description: ${details.description.substring(0, 50)}...`);
           console.log(`      - Players: ${details.minPlayers}-${details.maxPlayers}`);
           console.log(`      - Playing Time: ${details.playingTime} min`);
-          console.log(`      - Rating: ${details.rating?.toFixed(1)}/10`);
+          console.log(`      - Rating: ${details.bggRating?.toFixed(1)}/10`);
           console.log(`      - Designers: ${details.designers.join(', ')}`);
           console.log(`      - Categories: ${details.categories.length} categories`);
           console.log(`      - Mechanics: ${details.mechanics.length} mechanics`);
@@ -98,7 +108,12 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
           // Update the game with BGG data
           game.bggId = details.id;
           game.description = details.description;
-          game.yearPublished = details.yearPublished;
+
+          // Only set yearPublished if it's a valid number
+          if (details.yearPublished && !isNaN(details.yearPublished)) {
+            game.yearPublished = details.yearPublished;
+          }
+
           game.minPlayers = details.minPlayers;
           game.maxPlayers = details.maxPlayers;
           game.playingTime = details.playingTime;
@@ -110,8 +125,8 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
           game.publishers = details.publishers;
           game.categories = details.categories;
           game.mechanics = details.mechanics;
-          game.bggRating = details.rating;
-          game.bggAverageWeight = details.averageWeight;
+          game.bggRating = details.bggRating;
+          game.bggAverageWeight = details.bggAverageWeight;
           game.bggUrl = details.bggUrl;
           game.thumbnailUrl = details.thumbnailUrl;
 
@@ -125,9 +140,10 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
           stats.updated++;
         }
 
-        // Rate limiting - wait 1 second between requests to be nice to BGG
+        // Rate limiting - wait 5 seconds between requests to avoid hitting BGG rate limits
         if (games.indexOf(game) < games.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('   ⏳ Waiting 5 seconds before next request...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
 
       } catch (error: any) {
@@ -159,6 +175,7 @@ async function migrateBGGData(dryRun: boolean = false, limit: number = 0) {
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const reimport = args.includes('--reimport');
 
 // Parse limit argument
 let limit = 0;
@@ -168,7 +185,7 @@ if (limitIndex !== -1) {
 }
 
 // Run migration
-migrateBGGData(dryRun, limit)
+migrateBGGData(dryRun, limit, reimport)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error('Fatal error:', error);

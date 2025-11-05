@@ -13,7 +13,7 @@ export default function Navigation() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [upcomingGameNightsCount, setUpcomingGameNightsCount] = useState(0);
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
@@ -31,7 +31,7 @@ export default function Navigation() {
   // Fetch upcoming game nights count
   useEffect(() => {
     fetchUpcomingGameNights();
-  }, []);
+  }, [user]);
 
   const fetchUpcomingGameNights = async () => {
     try {
@@ -40,9 +40,17 @@ export default function Navigation() {
 
       if (Array.isArray(data)) {
         const now = new Date();
-        const upcoming = data.filter((gn: any) =>
-          new Date(gn.scheduledDate) >= now && gn.status !== 'cancelled'
-        );
+        const upcoming = data.filter((gn: any) => {
+          const isFuture = new Date(gn.scheduledDate) >= now;
+          const notCancelled = gn.status !== 'cancelled';
+
+          // Only count if user hasn't responded yet
+          const hasNotResponded = user
+            ? !gn.attendees.some((att: any) => att.playerId === user.id)
+            : true; // Show all if not logged in
+
+          return isFuture && notCancelled && hasNotResponded;
+        });
         setUpcomingGameNightsCount(upcoming.length);
       }
     } catch (error) {

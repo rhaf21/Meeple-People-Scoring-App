@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface Player {
   _id: string;
@@ -30,6 +31,7 @@ interface GameSession {
 }
 
 export default function HistoryPage() {
+  const { isAdmin } = useAuth();
   const [sessions, setSessions] = useState<GameSession[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +129,7 @@ export default function HistoryPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Game History</h1>
+            <h1 className="text-3xl text-gray-900 dark:text-gray-100">Game History</h1>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={exportToCSV}
@@ -166,7 +168,7 @@ export default function HistoryPage() {
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 flex-wrap gap-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{session.gameName}</h3>
+                          <h3 className="text-lg text-gray-900 dark:text-gray-100">{session.gameName}</h3>
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             session.scoringMode === 'pointing'
                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
@@ -188,12 +190,15 @@ export default function HistoryPage() {
                         >
                           {expandedSession === session._id ? 'Hide Details' : 'Show Details'}
                         </button>
-                        <button
-                          onClick={() => handleDelete(session._id)}
-                          className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
-                        >
-                          Delete
-                        </button>
+                        {/* Admin-only delete button */}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDelete(session._id)}
+                            className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -219,7 +224,7 @@ export default function HistoryPage() {
                   {/* Expanded Details */}
                   {expandedSession === session._id && (
                     <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-700/50">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Results:</h4>
+                      <h4 className="text-gray-900 dark:text-gray-100 mb-3">Results:</h4>
                       <div className="space-y-2">
                         {session.results
                           .sort((a, b) => a.rank - b.rank)

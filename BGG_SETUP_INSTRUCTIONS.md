@@ -15,7 +15,7 @@ As of 2025, BoardGameGeek (BGG) requires all applications using their XML API to
 2. Log in to your BGG account (create one if you don't have it)
 3. Click the **"Create an Application"** button
 4. Fill out the application form:
-   - **Application Name**: `Meeple People Scoring App`
+   - **Application Name**: `Farty Meople Scoring App`
    - **Description**: `Personal board game scoring tracker for game nights with friends`
    - **License Type**: Select **Non-commercial** (This is FREE)
    - **Website** (optional): Your app URL or leave blank
