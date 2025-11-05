@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+// @ts-ignore - Elastic Email client doesn't have type definitions
+import * as ElasticEmail from '@elasticemail/elasticemail-client';
 
 interface EmailOptions {
   to: string;
@@ -8,51 +8,38 @@ interface EmailOptions {
   text?: string;
 }
 
-// Create Gmail SMTP transporter with SSL (port 465)
-const createTransporter = (): Transporter | null => {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email service not configured. Set EMAIL_HOST, EMAIL_USER, and EMAIL_PASS environment variables.');
+// Initialize Elastic Email client
+const getElasticClient = () => {
+  if (!process.env.ELASTIC_API_KEY) {
+    console.warn('ELASTIC_API_KEY not configured. Email service will not work.');
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '465'),
-    secure: process.env.EMAIL_SECURE === 'true', // true for port 465 (SSL)
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    // Timeout configurations for production reliability
-    connectionTimeout: 10000, // 10 seconds to establish connection
-    greetingTimeout: 5000,    // 5 seconds for greeting
-    socketTimeout: 30000,      // 30 seconds for socket operations
-    // Connection pooling
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-  } as any);
+  const defaultClient = ElasticEmail.ApiClient.instance;
+  const apikey = defaultClient.authentications['apikey'];
+  apikey.apiKey = process.env.ELASTIC_API_KEY;
+
+  return new ElasticEmail.EmailsApi();
 };
 
 /**
- * Send an email with retry logic
+ * Send an email with retry logic using Elastic Email
  */
 async function sendEmailWithRetry(
-  transporter: Transporter,
-  mailOptions: any,
+  emailsApi: any,
+  emailData: any,
   retries: number = 3
 ): Promise<any> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`Attempting to send email (attempt ${attempt}/${retries})...`);
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`Email sent successfully: ${info.messageId}`);
-      return info;
+      const result = await emailsApi.emailsPost(emailData);
+      console.log(`Email sent successfully:`, result);
+      return result;
     } catch (error: any) {
       console.error(`Email attempt ${attempt} failed:`, {
-        code: error.code,
-        command: error.command,
         message: error.message,
+        status: error.status,
       });
 
       if (attempt === retries) {
@@ -67,32 +54,45 @@ async function sendEmailWithRetry(
 }
 
 /**
- * Send an email using Gmail SMTP with SSL
+ * Send an email using Elastic Email HTTP API
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const transporter = createTransporter();
+    const emailsApi = getElasticClient();
 
-    if (!transporter) {
+    if (!emailsApi) {
       console.error('Email service not configured');
       return false;
     }
 
-    const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME || 'Meeple People'}" <${process.env.EMAIL_USER}>`,
-      to: options.to,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-    };
+    const emailMessageData = ElasticEmail.EmailMessageData.constructFromObject({
+      Recipients: [
+        ElasticEmail.EmailRecipient.constructFromObject({
+          Email: options.to,
+        })
+      ],
+      Content: {
+        Body: [
+          ElasticEmail.BodyPart.constructFromObject({
+            ContentType: 'HTML',
+            Content: options.html,
+          }),
+          ...(options.text ? [ElasticEmail.BodyPart.constructFromObject({
+            ContentType: 'PlainText',
+            Content: options.text,
+          })] : []),
+        ],
+        From: process.env.EMAIL_FROM || 'Meeple People <noreply@yourdomain.com>',
+        Subject: options.subject,
+      }
+    });
 
-    await sendEmailWithRetry(transporter, mailOptions, 3);
+    await sendEmailWithRetry(emailsApi, emailMessageData, 3);
     return true;
   } catch (error: any) {
     console.error('Failed to send email after all retries:', {
-      code: error.code,
-      command: error.command,
       message: error.message,
+      status: error.status,
       to: options.to,
       subject: options.subject,
     });

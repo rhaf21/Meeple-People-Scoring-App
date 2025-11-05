@@ -24,7 +24,9 @@
       "Bash(npm run migrate:bgg:*)",
       "WebFetch(domain:boardgamegeek.com)",
       "WebFetch(domain:stackoverflow.com)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:www.mailersend.com)",
+      "WebFetch(domain:elasticemail.com)"
     ],
     "deny": [],
     "ask": []
