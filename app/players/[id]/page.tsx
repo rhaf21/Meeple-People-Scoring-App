@@ -23,7 +23,8 @@ interface PlayerProfile {
   profileClaimed: boolean;
   bio?: string;
   playStyle?: string;
-  favoriteGames: string[];
+  topFavoriteGames: string[];
+  leastFavoriteGames: string[];
   availability: Availability[];
   publicProfile: boolean;
   showStats: boolean;
@@ -54,13 +55,29 @@ export default function PlayerProfilePage() {
   // Edit form state
   const [editBio, setEditBio] = useState('');
   const [editPlayStyle, setEditPlayStyle] = useState('');
+  const [editTopFavoriteGames, setEditTopFavoriteGames] = useState<string[]>([]);
+  const [editLeastFavoriteGames, setEditLeastFavoriteGames] = useState<string[]>([]);
+  const [gameSearchTop, setGameSearchTop] = useState('');
+  const [gameSearchLeast, setGameSearchLeast] = useState('');
+  const [availableGames, setAvailableGames] = useState<{_id: string; name: string}[]>([]);
   const [editPublicProfile, setEditPublicProfile] = useState(true);
   const [editShowStats, setEditShowStats] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchPlayer();
+    fetchGames();
   }, [params.id]);
+
+  const fetchGames = async () => {
+    try {
+      const res = await fetch('/api/games');
+      const data = await res.json();
+      setAvailableGames(data.filter((g: any) => g.isActive !== false));
+    } catch (error) {
+      console.error('Error fetching games:', error);
+    }
+  };
 
   const fetchPlayer = async () => {
     setLoading(true);
@@ -77,6 +94,8 @@ export default function PlayerProfilePage() {
       // Initialize edit form
       setEditBio(profileData.bio || '');
       setEditPlayStyle(profileData.playStyle || '');
+      setEditTopFavoriteGames(profileData.topFavoriteGames || []);
+      setEditLeastFavoriteGames(profileData.leastFavoriteGames || []);
       setEditPublicProfile(profileData.publicProfile ?? true);
       setEditShowStats(profileData.showStats ?? true);
     } catch (err: any) {
@@ -94,6 +113,8 @@ export default function PlayerProfilePage() {
       await api.updatePlayerProfile(params.id as string, {
         bio: editBio || undefined,
         playStyle: editPlayStyle || undefined,
+        topFavoriteGames: editTopFavoriteGames,
+        leastFavoriteGames: editLeastFavoriteGames,
         publicProfile: editPublicProfile,
         showStats: editShowStats,
       });
@@ -114,6 +135,8 @@ export default function PlayerProfilePage() {
     if (player) {
       setEditBio(player.bio || '');
       setEditPlayStyle(player.playStyle || '');
+      setEditTopFavoriteGames(player.topFavoriteGames || []);
+      setEditLeastFavoriteGames(player.leastFavoriteGames || []);
       setEditPublicProfile(player.publicProfile ?? true);
       setEditShowStats(player.showStats ?? true);
     }
@@ -279,6 +302,136 @@ export default function PlayerProfilePage() {
               />
             </div>
 
+            {/* Top 3 Favorite Games */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Top 3 Favorite Games ({editTopFavoriteGames.length}/3)
+              </label>
+              <div className="space-y-2">
+                {editTopFavoriteGames.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {editTopFavoriteGames.map((game, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                      >
+                        {game}
+                        <button
+                          type="button"
+                          onClick={() => setEditTopFavoriteGames(editTopFavoriteGames.filter((_, i) => i !== idx))}
+                          disabled={saving}
+                          className="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {editTopFavoriteGames.length < 3 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={gameSearchTop}
+                      onChange={(e) => setGameSearchTop(e.target.value)}
+                      placeholder="Search and select games..."
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={saving}
+                    />
+                    {gameSearchTop && (
+                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {availableGames
+                          .filter(g => 
+                            g.name.toLowerCase().includes(gameSearchTop.toLowerCase()) &&
+                            !editTopFavoriteGames.includes(g.name) &&
+                            !editLeastFavoriteGames.includes(g.name)
+                          )
+                          .slice(0, 10)
+                          .map(game => (
+                            <button
+                              key={game._id}
+                              type="button"
+                              onClick={() => {
+                                setEditTopFavoriteGames([...editTopFavoriteGames, game.name]);
+                                setGameSearchTop('');
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                              {game.name}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 3 Least Favorite Games */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                3 Least Favorite Games ({editLeastFavoriteGames.length}/3)
+              </label>
+              <div className="space-y-2">
+                {editLeastFavoriteGames.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {editLeastFavoriteGames.map((game, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                      >
+                        {game}
+                        <button
+                          type="button"
+                          onClick={() => setEditLeastFavoriteGames(editLeastFavoriteGames.filter((_, i) => i !== idx))}
+                          disabled={saving}
+                          className="ml-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {editLeastFavoriteGames.length < 3 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={gameSearchLeast}
+                      onChange={(e) => setGameSearchLeast(e.target.value)}
+                      placeholder="Search and select games..."
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={saving}
+                    />
+                    {gameSearchLeast && (
+                      <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {availableGames
+                          .filter(g => 
+                            g.name.toLowerCase().includes(gameSearchLeast.toLowerCase()) &&
+                            !editTopFavoriteGames.includes(g.name) &&
+                            !editLeastFavoriteGames.includes(g.name)
+                          )
+                          .slice(0, 10)
+                          .map(game => (
+                            <button
+                              key={game._id}
+                              type="button"
+                              onClick={() => {
+                                setEditLeastFavoriteGames([...editLeastFavoriteGames, game.name]);
+                                setGameSearchLeast('');
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                              {game.name}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3">
                 <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
@@ -317,6 +470,38 @@ export default function PlayerProfilePage() {
               <div className={player.bio ? 'mt-4' : 'pt-4 border-t border-gray-200 dark:border-gray-700'}>
                 <h3 className="text-sm text-gray-700 dark:text-gray-300 mb-2">Play Style</h3>
                 <p className="text-gray-800 dark:text-gray-200">{player.playStyle}</p>
+              </div>
+            )}
+
+            {player.topFavoriteGames && player.topFavoriteGames.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm text-gray-700 dark:text-gray-300 mb-2">Top 3 Favorite Games</h3>
+                <div className="flex flex-wrap gap-2">
+                  {player.topFavoriteGames.map((game, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 rounded-full text-sm bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                    >
+                      {game}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {player.leastFavoriteGames && player.leastFavoriteGames.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm text-gray-700 dark:text-gray-300 mb-2">3 Least Favorite Games</h3>
+                <div className="flex flex-wrap gap-2">
+                  {player.leastFavoriteGames.map((game, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 rounded-full text-sm bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                    >
+                      {game}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </>

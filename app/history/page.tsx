@@ -44,8 +44,8 @@ export default function HistoryPage() {
   async function fetchData() {
     try {
       const [sessionsRes, playersRes] = await Promise.all([
-        fetch('/api/sessions?limit=100'),
-        fetch('/api/players'),
+        fetch('/api/sessions?limit=100', { cache: 'no-store' }),
+        fetch('/api/players', { cache: 'no-store' }),
       ]);
       const sessionsData = await sessionsRes.json();
       const playersData = await playersRes.json();
@@ -69,16 +69,37 @@ export default function HistoryPage() {
       return;
     }
 
+    // Store the original sessions for rollback if deletion fails
+    const previousSessions = [...sessions];
+
+    // Optimistically remove the session from UI
+    setSessions(sessions.filter(s => s._id !== sessionId));
+
     try {
+      const token = localStorage.getItem('authToken');
       const res = await fetch(`/api/sessions/${sessionId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        cache: 'no-store',
       });
 
-      if (res.ok) {
-        fetchData();
+      if (!res.ok) {
+        // Rollback on failure
+        setSessions(previousSessions);
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to delete session: ${errorData.error || 'Unknown error'}`);
+        return;
       }
+
+      // Success - refetch to ensure data consistency
+      await fetchData();
     } catch (error) {
+      // Rollback on network error
+      setSessions(previousSessions);
       console.error('Error deleting session:', error);
+      alert('Network error: Failed to delete session. Please check your connection and try again.');
     }
   }
 

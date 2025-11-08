@@ -7,6 +7,14 @@ export interface IAvailability {
   recurring: boolean;
 }
 
+
+// Validator function for array length
+function arrayLimit(val: any): boolean {
+  if (val === undefined || val === null) return true;
+  if (!Array.isArray(val)) return false;
+  return val.length <= 3;
+}
+
 export interface IPlayer extends Document {
   name: string;
   photoUrl?: string;
@@ -24,7 +32,8 @@ export interface IPlayer extends Document {
   // Profile fields
   bio?: string;
   playStyle?: string;
-  favoriteGames: string[]; // Game IDs or names
+  topFavoriteGames: string[]; // Top 3 favorite games
+  leastFavoriteGames: string[]; // 3 least favorite games
   availability: IAvailability[];
 
   // Privacy settings
@@ -113,16 +122,23 @@ const PlayerSchema = new Schema<IPlayer>(
     },
     playStyle: {
       type: String,
-      enum: ['Casual', 'Competitive', 'Social', 'Strategic', 'Any', ''],
+      maxlength: 100,
+      trim: true,
       default: '',
     },
-    favoriteGames: {
+    topFavoriteGames: {
       type: [String],
-      default: [],
+      validate: [arrayLimit, 'Top favorite games cannot exceed 3 items'],
+      default: () => [],
+    },
+    leastFavoriteGames: {
+      type: [String],
+      validate: [arrayLimit, 'Least favorite games cannot exceed 3 items'],
+      default: () => [],
     },
     availability: {
       type: [AvailabilitySchema],
-      default: [],
+      default: () => [],
     },
 
     // Privacy settings
@@ -149,4 +165,9 @@ PlayerSchema.index({ lastPlayedAt: -1 });
 PlayerSchema.index({ isActive: 1 });
 PlayerSchema.index({ role: 1 });
 
-export default mongoose.models.Player || mongoose.model<IPlayer>('Player', PlayerSchema);
+// Clear cached model to ensure schema updates are applied
+if (mongoose.models.Player) {
+  delete mongoose.models.Player;
+}
+
+export default mongoose.model<IPlayer>('Player', PlayerSchema);

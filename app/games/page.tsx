@@ -105,9 +105,13 @@ export default function GamesPage() {
       const url = editingGame ? `/api/games/${editingGame._id}` : '/api/games';
       const method = editingGame ? 'PUT' : 'POST';
 
+      const token = localStorage.getItem('authToken');
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: gameName,
           imageUrl,

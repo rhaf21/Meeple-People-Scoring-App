@@ -31,7 +31,13 @@ export async function GET(request: NextRequest) {
       .populate('gameId', 'name')
       .populate('results.playerId', 'name');
 
-    return NextResponse.json(sessions);
+    return NextResponse.json(sessions, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Error fetching game sessions:', error);
     return NextResponse.json(

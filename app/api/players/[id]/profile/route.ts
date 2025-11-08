@@ -45,7 +45,8 @@ export async function GET(
     if (player.publicProfile || isOwner) {
       profileData.bio = player.bio;
       profileData.playStyle = player.playStyle;
-      profileData.favoriteGames = player.favoriteGames;
+      profileData.topFavoriteGames = player.topFavoriteGames;
+      profileData.leastFavoriteGames = player.leastFavoriteGames;
     }
 
     // Add stats if visible
@@ -99,7 +100,8 @@ export async function PUT(
     const {
       bio,
       playStyle,
-      favoriteGames,
+      topFavoriteGames,
+      leastFavoriteGames,
       availability,
       publicProfile,
       showStats,
@@ -111,7 +113,16 @@ export async function PUT(
     const updateData: any = {};
     if (bio !== undefined) updateData.bio = bio;
     if (playStyle !== undefined) updateData.playStyle = playStyle;
-    if (favoriteGames !== undefined) updateData.favoriteGames = favoriteGames;
+    if (topFavoriteGames !== undefined) {
+      if (Array.isArray(topFavoriteGames) && topFavoriteGames.length <= 3) {
+        updateData.topFavoriteGames = topFavoriteGames;
+      }
+    }
+    if (leastFavoriteGames !== undefined) {
+      if (Array.isArray(leastFavoriteGames) && leastFavoriteGames.length <= 3) {
+        updateData.leastFavoriteGames = leastFavoriteGames;
+      }
+    }
     if (availability !== undefined) updateData.availability = availability;
     if (publicProfile !== undefined) updateData.publicProfile = publicProfile;
     if (showStats !== undefined) updateData.showStats = showStats;
@@ -140,7 +151,8 @@ export async function PUT(
         photoUrl: player.photoUrl,
         bio: player.bio,
         playStyle: player.playStyle,
-        favoriteGames: player.favoriteGames,
+        topFavoriteGames: player.topFavoriteGames,
+        leastFavoriteGames: player.leastFavoriteGames,
         availability: player.availability,
         publicProfile: player.publicProfile,
         showStats: player.showStats,
@@ -148,8 +160,13 @@ export async function PUT(
     });
   } catch (error: any) {
     console.error('Error updating player profile:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    if (error.name === 'ValidationError') {
+      console.error('Validation errors:', error.errors);
+    }
     return NextResponse.json(
-      { error: 'Failed to update player profile' },
+      { error: 'Failed to update player profile', details: error.message },
       { status: 500 }
     );
   }

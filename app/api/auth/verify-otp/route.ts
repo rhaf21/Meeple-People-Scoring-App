@@ -107,10 +107,19 @@ export async function POST(request: NextRequest) {
       message: 'Profile claimed successfully!',
       token,
       player: {
-        id: player._id,
+        id: player._id.toString(),
         name: player.name,
         email: player.email,
         photoUrl: player.photoUrl,
+        bio: player.bio,
+        playStyle: player.playStyle,
+        topFavoriteGames: player.topFavoriteGames || [],
+        leastFavoriteGames: player.leastFavoriteGames || [],
+        publicProfile: player.publicProfile,
+        showStats: player.showStats,
+        profileClaimed: player.profileClaimed,
+        emailVerified: player.emailVerified,
+        role: player.role,
       }
     });
 
