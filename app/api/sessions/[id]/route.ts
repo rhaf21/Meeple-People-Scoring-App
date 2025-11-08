@@ -3,6 +3,7 @@ import connectDB from '@/lib/utils/db';
 import GameSession from '@/lib/models/GameSession';
 import GameDefinition from '@/lib/models/GameDefinition';
 import Player from '@/lib/models/Player';
+import { Types } from 'mongoose';
 import {
   calculateScores,
   validateRankings,
@@ -98,7 +99,7 @@ export async function PUT(
         );
       }
 
-      const playerMap = new Map(players.map((p) => [p._id.toString(), p.name]));
+      const playerMap = new Map(players.map((p) => [(p._id as Types.ObjectId).toString(), p.name]));
 
       const resultsWithNames = results.map((r: PlayerResult) => ({
         ...r,

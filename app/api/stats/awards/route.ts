@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameSession from '@/lib/models/GameSession';
 import Player from '@/lib/models/Player';
+import { Types } from 'mongoose';
 
 interface PlayerAward {
   playerId: string;
@@ -84,7 +85,7 @@ export async function GET() {
     // Fetch player photos for all winners
     const allPlayerIds = [...weekTopPlayers, ...monthTopPlayers].map(p => p.playerId);
     const players = await Player.find({ _id: { $in: allPlayerIds } });
-    const playerPhotoMap = new Map(players.map(p => [p._id.toString(), p.photoUrl]));
+    const playerPhotoMap = new Map(players.map(p => [(p._id as Types.ObjectId).toString(), p.photoUrl]));
 
     // Add photos to week top players
     weekTopPlayers.forEach(player => {

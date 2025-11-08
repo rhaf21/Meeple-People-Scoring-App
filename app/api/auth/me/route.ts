@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import Player from '@/lib/models/Player';
 import { requireAuth } from '@/lib/middleware/authMiddleware';
+import { Types } from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      id: player._id.toString(),
+      id: (player._id as Types.ObjectId).toString(),
       name: player.name,
       email: player.email,
       photoUrl: player.photoUrl,

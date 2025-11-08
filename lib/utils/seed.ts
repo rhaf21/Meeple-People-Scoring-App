@@ -3,6 +3,7 @@ import Player from '../models/Player';
 import GameDefinition from '../models/GameDefinition';
 import GameSession from '../models/GameSession';
 import { calculateScores, getTotalPointsPool } from '../services/scoring';
+import { Types } from 'mongoose';
 
 const samplePlayers = [
   'Alice',
@@ -53,7 +54,7 @@ export async function seedDatabase() {
     const wingspan = games.find((g) => g.name === 'Wingspan')!;
     const session1Players = players.slice(0, 5);
     const session1Results = session1Players.map((player, index) => ({
-      playerId: player._id,
+      playerId: (player._id as Types.ObjectId).toString(),
       playerName: player.name,
       rank: index + 1,
       score: 100 - index * 10,
@@ -80,7 +81,7 @@ export async function seedDatabase() {
     const castingShadows = games.find((g) => g.name === 'Casting Shadows')!;
     const session2Players = players.slice(0, 4);
     const session2Results = session2Players.map((player, index) => ({
-      playerId: player._id,
+      playerId: (player._id as Types.ObjectId).toString(),
       playerName: player.name,
       rank: index + 1,
     }));
@@ -106,7 +107,7 @@ export async function seedDatabase() {
     const tapestry = games.find((g) => g.name === 'Tapestry')!;
     const session3Players = [players[2], players[0], players[4]]; // Different order
     const session3Results = session3Players.map((player, index) => ({
-      playerId: player._id,
+      playerId: (player._id as Types.ObjectId).toString(),
       playerName: player.name,
       rank: index + 1,
       score: 150 - index * 20,

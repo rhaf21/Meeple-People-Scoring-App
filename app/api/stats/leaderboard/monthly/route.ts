@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameSession from '@/lib/models/GameSession';
 import Player from '@/lib/models/Player';
+import { Types } from 'mongoose';
 
 interface MonthlyPlayerStats {
   _id: string;
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
     // Fetch player photos and correct IDs
     const playerIds = leaderboard.map((p) => p._id);
     const players = await Player.find({ _id: { $in: playerIds } });
-    const playerMap = new Map(players.map((p) => [p._id.toString(), { photoUrl: p.photoUrl, id: p._id.toString() }]));
+    const playerMap = new Map(players.map((p) => [(p._id as Types.ObjectId).toString(), { photoUrl: p.photoUrl, id: (p._id as Types.ObjectId).toString() }]));
 
     // Add photos to leaderboard and ensure correct _id
     leaderboard.forEach((player) => {

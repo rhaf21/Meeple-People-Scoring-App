@@ -3,6 +3,7 @@ import connectDB from '@/lib/utils/db';
 import Player from '@/lib/models/Player';
 import { verifyHashedValue, generateToken, isOTPExpired } from '@/lib/utils/auth';
 import { sendWelcomeEmail } from '@/lib/services/emailService';
+import { Types } from 'mongoose';
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     // Generate JWT token
     const token = generateToken({
-      playerId: player._id.toString(),
+      playerId: (player._id as Types.ObjectId).toString(),
       email: player.email!,
       name: player.name,
       role: player.role,
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       message: 'Profile claimed successfully!',
       token,
       player: {
-        id: player._id.toString(),
+        id: (player._id as Types.ObjectId).toString(),
         name: player.name,
         email: player.email,
         photoUrl: player.photoUrl,

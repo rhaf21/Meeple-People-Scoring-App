@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import Player from '@/lib/models/Player';
 import { optionalAuth, requireAuth, isResourceOwner } from '@/lib/middleware/authMiddleware';
+import { Types } from 'mongoose';
 
 // GET player profile by ID (public or private based on settings)
 export async function GET(
@@ -35,7 +36,7 @@ export async function GET(
 
     // Return full profile for owner, limited profile for others
     const profileData: any = {
-      _id: player._id.toString(),
+      _id: (player._id as Types.ObjectId).toString(),
       name: player.name,
       photoUrl: player.photoUrl,
       profileClaimed: player.profileClaimed,
@@ -145,7 +146,7 @@ export async function PUT(
     return NextResponse.json({
       message: 'Profile updated successfully',
       player: {
-        id: player._id.toString(),
+        id: (player._id as Types.ObjectId).toString(),
         name: player.name,
         email: player.email,
         photoUrl: player.photoUrl,
