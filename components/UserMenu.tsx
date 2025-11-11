@@ -5,10 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import RoleBadge from './RoleBadge';
+import FeedbackModal from './FeedbackModal';
 
 export default function UserMenu() {
   const { user, logout, isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   if (!user) return null;
 
@@ -86,6 +88,30 @@ export default function UserMenu() {
                 My Game Nights
               </Link>
 
+              <Link
+                href="/my-feedback"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                My Feedback
+              </Link>
+
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsFeedbackOpen(true);
+                }}
+                className="flex items-center w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Send Feedback
+              </button>
+
               {isAdmin && (
                 <Link
                   href="/admin/dashboard"
@@ -117,6 +143,8 @@ export default function UserMenu() {
           </div>
         </>
       )}
+
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </div>
   );
 }
