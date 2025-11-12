@@ -40,6 +40,30 @@ export async function GET(request: NextRequest) {
       .populate('gameId', 'name')
       .select('gameId playedAt results');
 
+    // Get most played games
+    const mostPlayedGames = await GameSession.aggregate([
+      {
+        $group: {
+          _id: '$gameId',
+          timesPlayed: { $sum: 1 },
+          gameName: { $first: '$gameName' },
+        },
+      },
+      {
+        $sort: { timesPlayed: -1 },
+      },
+      {
+        $limit: 5,
+      },
+      {
+        $project: {
+          _id: 1,
+          gameName: 1,
+          timesPlayed: 1,
+        },
+      },
+    ]);
+
     return NextResponse.json({
       players: {
         total: totalPlayers,
@@ -50,6 +74,7 @@ export async function GET(request: NextRequest) {
       games: {
         total: totalGames,
         active: activeGames,
+        mostPlayed: mostPlayedGames,
       },
       sessions: {
         total: totalSessions,

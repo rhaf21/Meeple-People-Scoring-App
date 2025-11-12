@@ -15,18 +15,48 @@ const boldonse = Boldonse({
   weight: ["400"],
 });
 
-export const metadata: Metadata = {
-  title: "Farty Meople Scoring App",
-  description: "Track scores and statistics for your board game sessions",
-  icons: {
-    icon: [
-      {
-        url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>',
-        type: 'image/svg+xml',
-      },
-    ],
-  },
-};
+// Fetch system settings for metadata
+async function getSystemSettings() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/admin/settings`, {
+      cache: 'no-store', // Always fetch fresh settings
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error('Failed to fetch system settings for metadata:', error);
+  }
+  return {
+    siteTitle: 'Farty Meople Scoring App',
+    faviconUrl: null,
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSystemSettings();
+
+  return {
+    title: settings.siteTitle || "Farty Meople Scoring App",
+    description: "Track scores and statistics for your board game sessions",
+    icons: {
+      icon: settings.faviconUrl
+        ? [
+            {
+              url: settings.faviconUrl,
+              type: 'image/png',
+            },
+          ]
+        : [
+            {
+              url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>',
+              type: 'image/svg+xml',
+            },
+          ],
+    },
+  };
+}
 
 export default function RootLayout({
   children,

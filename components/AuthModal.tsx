@@ -43,6 +43,16 @@ export default function AuthModal({ isOpen, onClose, playerIdForClaim, playerNam
     }
   }, [isOpen, authMode, step]);
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
+
   const fetchPlayers = async () => {
     try {
       const data: any = await api.getPlayers();
@@ -148,7 +158,7 @@ export default function AuthModal({ isOpen, onClose, playerIdForClaim, playerNam
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+    <div className="fixed inset-0 backdrop-blur-md bg-white/30 dark:bg-gray-900/30 flex items-center justify-center z-50 animate-fadeIn">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 animate-fadeInUp">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">

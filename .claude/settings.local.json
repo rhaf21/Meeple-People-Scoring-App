@@ -31,7 +31,8 @@
       "Bash(for:*)",
       "Bash(do sed -i 's/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-bold\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-semibold\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-black\\([^\"\"]*\"\"\\)/\\1\\2/g; s/\\(<h[1-6][^>]*className=\"\"[^\"\"]*\\) font-extrabold\\([^\"\"]*\"\"\\)/\\1\\2/g' \"$file\")",
       "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

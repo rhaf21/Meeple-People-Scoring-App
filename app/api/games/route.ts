@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameDefinition from '@/lib/models/GameDefinition';
+import GameSession from '@/lib/models/GameSession';
 import { requireAdmin, requireUser } from '@/lib/middleware/authMiddleware';
 
 // GET all games
@@ -15,8 +16,31 @@ export async function GET(request: NextRequest) {
       ? { $or: [{ isActive: true }, { isActive: { $exists: false } }] }
       : {};
 
-    const games = await GameDefinition.find(filter).sort({ name: 1 });
-    return NextResponse.json(games);
+    // Fetch games
+    const games = await GameDefinition.find(filter).sort({ name: 1 }).lean();
+
+    // Aggregate session counts per game
+    const sessionCounts = await GameSession.aggregate([
+      {
+        $group: {
+          _id: '$gameId',
+          timesPlayed: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Create a map of gameId -> timesPlayed
+    const countsMap = new Map(
+      sessionCounts.map(item => [item._id.toString(), item.timesPlayed])
+    );
+
+    // Merge timesPlayed into games
+    const gamesWithCounts = games.map(game => ({
+      ...game,
+      timesPlayed: countsMap.get(String(game._id)) || 0
+    }));
+
+    return NextResponse.json(gamesWithCounts);
   } catch (error) {
     console.error('Error fetching games:', error);
     return NextResponse.json(

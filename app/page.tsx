@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import PlayerAwards from '@/components/PlayerAwards';
 import BestPlayerPerGame from '@/components/BestPlayerPerGame';
 import MonthlyLeaderboard from '@/components/MonthlyLeaderboard';
@@ -191,6 +192,7 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

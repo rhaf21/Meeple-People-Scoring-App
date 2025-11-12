@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import ImageUpload from '@/components/ImageUpload';
 import AddGameModal from '@/components/AddGameModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -17,6 +18,7 @@ interface Game {
   pointsPerPlayer: number;
   isActive: boolean;
   createdAt: string;
+  timesPlayed?: number;
   // BGG fields
   description?: string;
   yearPublished?: number;
@@ -251,6 +253,7 @@ export default function GamesPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Name</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Scoring Mode</th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Points/Player</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Times Played</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -285,6 +288,9 @@ export default function GamesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">{game.pointsPerPlayer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
+                          {game.timesPlayed || 0}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                           {/* Admin-only actions */}
                           {isAdmin && (
@@ -664,6 +670,7 @@ export default function GamesPage() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

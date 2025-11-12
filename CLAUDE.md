@@ -4,6 +4,142 @@ This document outlines critical workflows and best practices when working on thi
 
 ## Critical Workflows
 
+### Authentication & Authorization
+
+**⚠️ CRITICAL**: Every API endpoint MUST have proper authentication/authorization implemented BEFORE writing business logic.
+
+#### When Creating New API Endpoints:
+
+**ALWAYS follow this order:**
+1. **Determine auth level FIRST** (public, user, admin)
+2. **Add middleware at the TOP** of your endpoint function
+3. **Write business logic AFTER** auth is verified
+4. **Test with proper auth headers**
+
+#### Authentication Middleware Reference:
+
+```typescript
+// ✅ ADMIN-ONLY ENDPOINT (settings, user management, etc.)
+import { requireAdmin } from '@/lib/middleware/authMiddleware';
+
+export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const user = authResult; // user.role === 'admin'
+
+  // ... business logic here
+}
+
+// ✅ USER ENDPOINT (user or admin can access)
+import { requireUser } from '@/lib/middleware/authMiddleware';
+
+export async function PATCH(request: NextRequest) {
+  const authResult = await requireUser(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const user = authResult; // user.role === 'user' or 'admin'
+
+  // ... business logic here
+}
+
+// ✅ AUTHENTICATED ENDPOINT (any logged-in user)
+import { requireAuth } from '@/lib/middleware/authMiddleware';
+
+export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const user = authResult;
+
+  // ... business logic here
+}
+
+// ✅ PUBLIC ENDPOINT (explicitly document as public)
+export async function GET(request: NextRequest) {
+  // PUBLIC ENDPOINT - No authentication required
+  // Used for: leaderboards, public stats, etc.
+
+  // ... business logic here
+}
+```
+
+#### Testing Authenticated Endpoints:
+
+**Step 1: Get JWT Token**
+```bash
+# Send OTP to email
+curl -X POST http://localhost:3000/api/auth/send-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"your-admin-email@example.com"}'
+
+# Verify OTP and get token
+curl -X POST http://localhost:3000/api/auth/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"your-admin-email@example.com","otp":"123456"}'
+
+# Response will include: { "token": "eyJhbGc...", ... }
+# SAVE THIS TOKEN!
+```
+
+**Step 2: Use Token in Requests**
+```bash
+# Test admin settings endpoint (GET - public)
+curl http://localhost:3000/api/admin/settings
+
+# Test admin settings update (PATCH - requires admin)
+curl -X PATCH http://localhost:3000/api/admin/settings \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"siteTitle":"My Custom Title","primaryColor":"#ff0000"}'
+
+# Test admin file upload (POST - requires admin)
+curl -X POST http://localhost:3000/api/admin/settings/upload \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -F "file=@/path/to/logo.png" \
+  -F "type=logo"
+
+# Test admin file delete (DELETE - requires admin)
+curl -X DELETE "http://localhost:3000/api/admin/settings/upload?type=logo" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+```
+
+**Using Postman/Thunder Client:**
+1. Create request
+2. Go to "Auth" or "Headers" tab
+3. Add header: `Authorization` with value: `Bearer YOUR_JWT_TOKEN_HERE`
+4. Send request
+
+#### Authorization Checklist:
+
+**Before creating any new endpoint:**
+- [ ] Determine required auth level (public, user, or admin)
+- [ ] Import appropriate middleware (`requireAuth`, `requireUser`, or `requireAdmin`)
+- [ ] Add auth check at the VERY START of the function (before any business logic)
+- [ ] Handle the auth result (return if NextResponse, use user data if success)
+- [ ] Test endpoint WITHOUT auth header (should get 401/403 error)
+- [ ] Test endpoint WITH valid auth header (should succeed)
+- [ ] Test endpoint with WRONG auth level (user trying to access admin endpoint)
+- [ ] Document auth requirements in code comments
+- [ ] Add example curl commands to this file if introducing new patterns
+
+#### Common Auth Errors:
+
+**Error: "Unauthorized - No token provided"**
+- Missing `Authorization` header
+- Header doesn't start with `Bearer `
+- Solution: Add `Authorization: Bearer YOUR_TOKEN` header
+
+**Error: "Unauthorized - Invalid token"**
+- Token is expired (7 day expiry)
+- Token is malformed
+- Solution: Get a new token via `/api/auth/verify-otp`
+
+**Error: "Forbidden - Admin access required"**
+- User is authenticated but not an admin
+- Solution: Use an admin account or change endpoint to `requireUser`
+
+**Error: "Forbidden - User access required"**
+- User has 'guest' role
+- Solution: User needs to claim their profile to get 'user' role
+
 ### TypeScript Type Checking
 
 **IMPORTANT**: After every file edit, especially TypeScript files, you MUST verify type safety.
@@ -182,12 +318,14 @@ curl http://localhost:3000/api/stats/leaderboard/overall
 ## Before Committing
 
 1. [ ] Run TypeScript type check: `npx tsc --noEmit`
-2. [ ] Run linter: `npm run lint` (if configured)
-3. [ ] Test all modified endpoints
-4. [ ] Verify frontend compiles: `cd client && npm run build`
-5. [ ] Verify backend compiles: `cd server && npm run build`
-6. [ ] Update documentation if API changes
-7. [ ] Test in development mode: `npm run dev`
+2. [ ] **Test all modified endpoints with proper authentication headers**
+3. [ ] Verify auth requirements are documented in endpoint comments
+4. [ ] Run linter: `npm run lint` (if configured)
+5. [ ] Verify frontend compiles: `cd client && npm run build`
+6. [ ] Verify backend compiles: `cd server && npm run build`
+7. [ ] Update documentation if API changes
+8. [ ] Update CLAUDE.md with new curl examples if new auth patterns introduced
+9. [ ] Test in development mode: `npm run dev`
 
 ## Deployment Checklist
 

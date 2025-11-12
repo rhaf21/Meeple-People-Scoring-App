@@ -114,7 +114,7 @@ export default function Navigation() {
             ))}
           </div>
 
-          {/* Mobile: Hamburger on left */}
+          {/* Mobile: Hamburger */}
           <div className="flex md:hidden items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

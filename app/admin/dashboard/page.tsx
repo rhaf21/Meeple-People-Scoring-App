@@ -14,6 +14,11 @@ interface Stats {
   games: {
     total: number;
     active: number;
+    mostPlayed: Array<{
+      _id: string;
+      gameName: string;
+      timesPlayed: number;
+    }>;
   };
   sessions: {
     total: number;
@@ -204,6 +209,57 @@ export default function AdminDashboard() {
               </div>
             </Link>
           </div>
+
+          {/* Most Played Games */}
+          {stats.games.mostPlayed && stats.games.mostPlayed.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 mb-6 sm:mb-8">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-base sm:text-lg text-gray-900 dark:text-gray-100">
+                  Most Played Games
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Top 5 games by number of sessions
+                </p>
+              </div>
+              <div className="p-4 sm:p-6">
+                <div className="space-y-3 sm:space-y-4">
+                  {stats.games.mostPlayed.map((game, index) => (
+                    <div
+                      key={game._id}
+                      className="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0 ${
+                          index === 0
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                            : index === 1
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            : index === 2
+                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                        }`}>
+                          <span className="text-sm sm:text-base font-bold">#{index + 1}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">
+                            {game.gameName}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            Played {game.timesPlayed} {game.timesPlayed === 1 ? 'time' : 'times'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 ml-4">
+                        <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs sm:text-sm font-semibold">
+                          {game.timesPlayed}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recent Sessions */}
           {stats.sessions.recent && stats.sessions.recent.length > 0 && (
