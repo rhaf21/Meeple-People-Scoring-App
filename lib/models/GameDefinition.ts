@@ -136,9 +136,8 @@ const GameDefinitionSchema = new Schema<IGameDefinition>(
   }
 );
 
-// Indexes (name already indexed via unique: true)
+// Indexes (name and bggId already indexed via unique: true)
 GameDefinitionSchema.index({ isActive: 1 });
-GameDefinitionSchema.index({ bggId: 1 });
 
 // Clear cached model to ensure schema updates are applied
 if (mongoose.models.GameDefinition) {

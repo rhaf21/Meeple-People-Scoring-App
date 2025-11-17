@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
-export default function ProfileRedirectPage() {
+function ProfileRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -33,5 +33,24 @@ export default function ProfileRedirectPage() {
         <p className="mt-4 text-gray-600 dark:text-gray-400">Redirecting to your profile...</p>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ProfileRedirectPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ProfileRedirect />
+    </Suspense>
   );
 }
