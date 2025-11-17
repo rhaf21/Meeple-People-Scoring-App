@@ -140,4 +140,9 @@ const GameDefinitionSchema = new Schema<IGameDefinition>(
 GameDefinitionSchema.index({ isActive: 1 });
 GameDefinitionSchema.index({ bggId: 1 });
 
-export default mongoose.models.GameDefinition || mongoose.model<IGameDefinition>('GameDefinition', GameDefinitionSchema);
+// Clear cached model to ensure schema updates are applied
+if (mongoose.models.GameDefinition) {
+  delete mongoose.models.GameDefinition;
+}
+
+export default mongoose.model<IGameDefinition>('GameDefinition', GameDefinitionSchema);

@@ -206,3 +206,269 @@ export async function sendWelcomeEmail(email: string, playerName: string): Promi
     html,
   });
 }
+
+/**
+ * Send game night invite email
+ */
+export async function sendGameNightInviteEmail(
+  email: string,
+  playerName: string,
+  gameNightDetails: {
+    title: string;
+    description?: string;
+    scheduledDate: string;
+    location?: string;
+    organizerName: string;
+    calendarUrl?: string;
+  }
+): Promise<boolean> {
+  const formattedDate = new Date(gameNightDetails.scheduledDate).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const subject = `🎲 Game Night Invite: ${gameNightDetails.title}`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+        .detail-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #667eea; border-radius: 4px; }
+        .detail-label { font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .button { background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎲 Game Night Invitation</h1>
+        </div>
+        <div class="content">
+          <h2>Hello ${playerName}!</h2>
+          <p><strong>${gameNightDetails.organizerName}</strong> has invited you to a game night!</p>
+
+          <div class="detail-box">
+            <div class="detail-label">📌 Event</div>
+            <div>${gameNightDetails.title}</div>
+          </div>
+
+          ${gameNightDetails.description ? `
+          <div class="detail-box">
+            <div class="detail-label">📝 Description</div>
+            <div>${gameNightDetails.description}</div>
+          </div>
+          ` : ''}
+
+          <div class="detail-box">
+            <div class="detail-label">📅 When</div>
+            <div>${formattedDate}</div>
+          </div>
+
+          ${gameNightDetails.location ? `
+          <div class="detail-box">
+            <div class="detail-label">📍 Where</div>
+            <div>${gameNightDetails.location}</div>
+          </div>
+          ` : ''}
+
+          ${gameNightDetails.calendarUrl ? `
+          <div style="text-align: center;">
+            <a href="${gameNightDetails.calendarUrl}" class="button">View in Google Calendar</a>
+          </div>
+          <p style="text-align: center; font-size: 12px; color: #666;">
+            The event has been added to your Google Calendar. You can RSVP directly from your calendar.
+          </p>
+          ` : ''}
+
+          <p>We hope to see you there! 🎮</p>
+        </div>
+        <div class="footer">
+          <p>Farty Meople Scoring App - Track your board game victories!</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Send game night update email
+ */
+export async function sendGameNightUpdateEmail(
+  email: string,
+  playerName: string,
+  gameNightDetails: {
+    title: string;
+    scheduledDate: string;
+    location?: string;
+    calendarUrl?: string;
+  },
+  changes: string
+): Promise<boolean> {
+  const formattedDate = new Date(gameNightDetails.scheduledDate).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const subject = `🔔 Game Night Updated: ${gameNightDetails.title}`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+        .detail-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #f59e0b; border-radius: 4px; }
+        .detail-label { font-weight: bold; color: #f59e0b; margin-bottom: 5px; }
+        .changes-box { background: #fff7ed; border: 2px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .button { background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔔 Game Night Updated</h1>
+        </div>
+        <div class="content">
+          <h2>Hello ${playerName}!</h2>
+          <p>The game night details have been updated.</p>
+
+          <div class="changes-box">
+            <strong>What changed:</strong><br>
+            ${changes}
+          </div>
+
+          <div class="detail-box">
+            <div class="detail-label">📌 Event</div>
+            <div>${gameNightDetails.title}</div>
+          </div>
+
+          <div class="detail-box">
+            <div class="detail-label">📅 When</div>
+            <div>${formattedDate}</div>
+          </div>
+
+          ${gameNightDetails.location ? `
+          <div class="detail-box">
+            <div class="detail-label">📍 Where</div>
+            <div>${gameNightDetails.location}</div>
+          </div>
+          ` : ''}
+
+          ${gameNightDetails.calendarUrl ? `
+          <div style="text-align: center;">
+            <a href="${gameNightDetails.calendarUrl}" class="button">View Updated Event</a>
+          </div>
+          <p style="text-align: center; font-size: 12px; color: #666;">
+            Your calendar has been updated automatically.
+          </p>
+          ` : ''}
+        </div>
+        <div class="footer">
+          <p>Farty Meople Scoring App</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Send game night cancellation email
+ */
+export async function sendGameNightCancellationEmail(
+  email: string,
+  playerName: string,
+  gameNightDetails: {
+    title: string;
+    scheduledDate: string;
+    organizerName: string;
+  }
+): Promise<boolean> {
+  const formattedDate = new Date(gameNightDetails.scheduledDate).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const subject = `❌ Game Night Cancelled: ${gameNightDetails.title}`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+        .detail-box { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #ef4444; border-radius: 4px; }
+        .detail-label { font-weight: bold; color: #ef4444; margin-bottom: 5px; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>❌ Game Night Cancelled</h1>
+        </div>
+        <div class="content">
+          <h2>Hello ${playerName},</h2>
+          <p>We're sorry to inform you that the following game night has been cancelled by <strong>${gameNightDetails.organizerName}</strong>.</p>
+
+          <div class="detail-box">
+            <div class="detail-label">📌 Event</div>
+            <div>${gameNightDetails.title}</div>
+          </div>
+
+          <div class="detail-box">
+            <div class="detail-label">📅 Was Scheduled For</div>
+            <div>${formattedDate}</div>
+          </div>
+
+          <p>The event has been removed from your calendar. We hope to game with you again soon!</p>
+        </div>
+        <div class="footer">
+          <p>Farty Meople Scoring App</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+  });
+}

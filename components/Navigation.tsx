@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import UserMenu from './UserMenu';
 import AuthModal from './AuthModal';
+import VersionBadge from './VersionBadge';
 
 export default function Navigation() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -184,6 +185,9 @@ export default function Navigation() {
                 </svg>
               )}
             </button>
+
+            {/* Version Badge */}
+            <VersionBadge />
           </div>
         </div>
 

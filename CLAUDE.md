@@ -323,9 +323,24 @@ curl http://localhost:3000/api/stats/leaderboard/overall
 4. [ ] Run linter: `npm run lint` (if configured)
 5. [ ] Verify frontend compiles: `cd client && npm run build`
 6. [ ] Verify backend compiles: `cd server && npm run build`
-7. [ ] Update documentation if API changes
-8. [ ] Update CLAUDE.md with new curl examples if new auth patterns introduced
-9. [ ] Test in development mode: `npm run dev`
+7. [ ] **📝 Update changelog page (`app/changelog/page.tsx`) with all changes made**
+8. [ ] Update documentation if API changes
+9. [ ] Update CLAUDE.md with new curl examples if new auth patterns introduced
+10. [ ] Test in development mode: `npm run dev`
+
+### Changelog Documentation
+
+**⚠️ CRITICAL**: Every change MUST be documented in the changelog page before committing.
+
+- **Location**: `app/changelog/page.tsx`
+- **Access**: Version badge in navigation or `/changelog` URL
+- **Categories**:
+  - ✨ New Features (new functionality added)
+  - 🔧 Improvements (enhancements to existing features)
+  - 🐛 Bug Fixes (fixes to broken functionality)
+- **Format**: Add changes to the latest version section, create new version if needed
+- **Details**: Include file names and line numbers for significant changes
+- **Purpose**: Keep users informed and track project evolution
 
 ## Deployment Checklist
 

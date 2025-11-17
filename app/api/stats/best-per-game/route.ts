@@ -38,7 +38,7 @@ export async function GET() {
     const gameChampions: GameChampion[] = [];
 
     for (const game of games) {
-      const gameIdStr = game._id.toString();
+      const gameIdStr = (game._id as any).toString();
 
       // Find all players who have played this game with at least MIN_GAMES_THRESHOLD games
       const qualifiedPlayers: BestPlayerData[] = [];
@@ -73,7 +73,7 @@ export async function GET() {
       // Only include games that have a qualified best player
       if (bestPlayer) {
         gameChampions.push({
-          gameId: game._id.toString(),
+          gameId: (game._id as any).toString(),
           gameName: game.name,
           gameImage: game.imageUrl,
           bestPlayer,

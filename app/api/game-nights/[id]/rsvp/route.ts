@@ -3,6 +3,7 @@ import connectDB from '@/lib/utils/db';
 import GameNight from '@/lib/models/GameNight';
 import Player from '@/lib/models/Player';
 import { requireAuth } from '@/lib/middleware/authMiddleware';
+import { updateAttendeeResponse } from '@/lib/services/googleCalendarService';
 
 // POST RSVP to game night
 export async function POST(
@@ -90,6 +91,21 @@ export async function POST(
     }
 
     await gameNight.save();
+
+    // Update Google Calendar if player has it connected (uses PLAYER's credentials, not organizer's)
+    if (player.googleCalendarConnected && gameNight.calendarSyncEnabled && gameNight.googleCalendarEventId && player.email) {
+      try {
+        await updateAttendeeResponse(
+          gameNight.googleCalendarEventId,
+          player.email,
+          rsvpStatus,
+          user.playerId // Use the PLAYER's ID (not organizer's) to access their calendar
+        );
+      } catch (calendarError: any) {
+        console.error(`Failed to update calendar response for ${player.email}:`, calendarError);
+        // Don't fail the RSVP update if calendar sync fails (player might not have permissions)
+      }
+    }
 
     return NextResponse.json({
       message: 'RSVP updated successfully',

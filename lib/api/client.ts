@@ -193,4 +193,7 @@ export const api = {
 
   removeRSVP: (id: string) =>
     apiClient.delete(`/api/game-nights/${id}/rsvp`, true),
+
+  syncGameNightRsvps: (id: string) =>
+    apiClient.post(`/api/game-nights/${id}/sync-rsvp`, {}, true),
 };

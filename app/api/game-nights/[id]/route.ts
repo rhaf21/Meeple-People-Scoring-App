@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import GameNight from '@/lib/models/GameNight';
 import Player from '@/lib/models/Player';
+import GameDefinition from '@/lib/models/GameDefinition';
 import { requireAuth, optionalAuth, isResourceOwner } from '@/lib/middleware/authMiddleware';
+
+// Force GameDefinition import to execute (prevents tree-shaking)
+void GameDefinition;
 
 // GET game night by ID
 export async function GET(

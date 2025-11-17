@@ -28,6 +28,8 @@ interface GameSession {
   playedAt: string;
   results: GameResult[];
   totalPointsPool: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function HistoryPage() {
@@ -62,6 +64,22 @@ export default function HistoryPage() {
   const getPlayerPhoto = (playerName: string): string => {
     const player = players.find(p => p.name === playerName);
     return player?.photoUrl || '/player-placeholder.svg';
+  }
+
+  // Helper function to format relative time
+  const getRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
   }
 
   async function handleDelete(sessionId: string) {
@@ -199,7 +217,16 @@ export default function HistoryPage() {
                           </span>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
-                          <span>{new Date(session.playedAt).toLocaleDateString()} at {new Date(session.playedAt).toLocaleTimeString()}</span>
+                          <div className="flex flex-col gap-1">
+                            <span className="flex items-center gap-1" title={`Full date: ${new Date(session.playedAt).toLocaleString()}`}>
+                              📅 Played: {getRelativeTime(session.playedAt)}
+                            </span>
+                            {session.createdAt && new Date(session.playedAt).toDateString() !== new Date(session.createdAt).toDateString() && (
+                              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400" title={`Full date: ${new Date(session.createdAt).toLocaleString()}`}>
+                                ⏱️ Recorded: {getRelativeTime(session.createdAt)}
+                              </span>
+                            )}
+                          </div>
                           <span>{session.playerCount} players</span>
                           <span>{session.totalPointsPool} points pool</span>
                         </div>
@@ -245,6 +272,42 @@ export default function HistoryPage() {
                   {/* Expanded Details */}
                   {expandedSession === session._id && (
                     <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-700/50">
+                      {/* Timestamp Details */}
+                      <div className="mb-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Timeline</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                          <div className="flex items-start gap-2">
+                            <span className="text-lg">📅</span>
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">Game Played</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">
+                                {new Date(session.playedAt).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-lg">⏱️</span>
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-gray-100">Recorded</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">
+                                {session.createdAt ? new Date(session.createdAt).toLocaleString() : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                          {session.updatedAt && new Date(session.updatedAt).getTime() !== new Date(session.createdAt).getTime() && (
+                            <div className="flex items-start gap-2">
+                              <span className="text-lg">✏️</span>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-gray-100">Last Updated</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                  {new Date(session.updatedAt).toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <h4 className="text-gray-900 dark:text-gray-100 mb-3">Results:</h4>
                       <div className="space-y-2">
                         {session.results

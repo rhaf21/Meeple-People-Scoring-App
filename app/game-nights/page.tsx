@@ -21,7 +21,7 @@ interface GameNight {
     rsvpStatus: 'going' | 'maybe' | 'not-going';
   }[];
   suggestedGames: string[];
-  status: 'upcoming' | 'in-progress' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
   maxAttendees?: number;
   isPrivate: boolean;
 }
@@ -32,7 +32,7 @@ export default function GameNightsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+  const [filter, setFilter] = useState<'all' | 'scheduled' | 'in-progress' | 'completed-cancelled'>('scheduled');
 
   useEffect(() => {
     fetchGameNights();
@@ -45,24 +45,29 @@ export default function GameNightsPage() {
       const data: any = await api.getGameNights();
 
       // Filter based on selected filter
-      const now = new Date();
       let filtered = data;
 
-      if (filter === 'upcoming') {
+      if (filter === 'scheduled') {
+        // Show only scheduled (upcoming) game nights
         filtered = data.filter((gn: GameNight) =>
-          new Date(gn.scheduledDate) >= now && gn.status !== 'cancelled'
+          gn.status === 'scheduled' && new Date(gn.scheduledDate) >= new Date()
         );
-      } else if (filter === 'past') {
+      } else if (filter === 'in-progress') {
+        // Show only in-progress game nights
+        filtered = data.filter((gn: GameNight) => gn.status === 'in-progress');
+      } else if (filter === 'completed-cancelled') {
+        // Show completed and cancelled game nights
         filtered = data.filter((gn: GameNight) =>
-          new Date(gn.scheduledDate) < now || gn.status === 'completed' || gn.status === 'cancelled'
+          gn.status === 'completed' || gn.status === 'cancelled'
         );
       }
+      // 'all' shows everything (no filter)
 
-      // Sort by date (upcoming first for upcoming, recent first for past)
+      // Sort by date (upcoming first for scheduled/in-progress, recent first for completed/cancelled)
       filtered.sort((a: GameNight, b: GameNight) => {
         const dateA = new Date(a.scheduledDate).getTime();
         const dateB = new Date(b.scheduledDate).getTime();
-        return filter === 'past' ? dateB - dateA : dateA - dateB;
+        return filter === 'completed-cancelled' ? dateB - dateA : dateA - dateB;
       });
 
       setGameNights(filtered);
@@ -91,12 +96,12 @@ export default function GameNightsPage() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      upcoming: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+      scheduled: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
       'in-progress': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
       completed: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
       cancelled: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
     };
-    return badges[status as keyof typeof badges] || badges.upcoming;
+    return badges[status as keyof typeof badges] || badges.scheduled;
   };
 
   const getGoingCount = (attendees: GameNight['attendees']) => {
@@ -137,7 +142,37 @@ export default function GameNightsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex space-x-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setFilter('scheduled')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            filter === 'scheduled'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          Scheduled
+        </button>
+        <button
+          onClick={() => setFilter('in-progress')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            filter === 'in-progress'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          In Progress
+        </button>
+        <button
+          onClick={() => setFilter('completed-cancelled')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            filter === 'completed-cancelled'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          Completed & Cancelled
+        </button>
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 font-medium transition-colors border-b-2 ${
@@ -146,27 +181,7 @@ export default function GameNightsPage() {
               : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
           }`}
         >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('upcoming')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'upcoming'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
-        >
-          Upcoming
-        </button>
-        <button
-          onClick={() => setFilter('past')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'past'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
-        >
-          Past
+          All Statuses
         </button>
       </div>
 

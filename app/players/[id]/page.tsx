@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { api, apiClient } from '@/lib/api/client';
+import GoogleCalendarButton from '@/components/GoogleCalendarButton';
 
 interface Availability {
   dayOfWeek: number;
@@ -45,12 +46,14 @@ interface PlayerStats {
 
 export default function PlayerProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [player, setPlayer] = useState<PlayerProfile | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Edit form state
   const [editBio, setEditBio] = useState('');
@@ -68,6 +71,20 @@ export default function PlayerProfilePage() {
     fetchPlayer();
     fetchGames();
   }, [params.id]);
+
+  useEffect(() => {
+    // Check for OAuth callback success/error messages
+    const success = searchParams.get('success');
+    const errorParam = searchParams.get('error');
+
+    if (success === 'google_calendar_connected') {
+      setSuccessMessage('Google Calendar connected successfully!');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } else if (errorParam) {
+      setError(`Google Calendar connection failed: ${errorParam}`);
+      setTimeout(() => setError(''), 5000);
+    }
+  }, [searchParams]);
 
   const fetchGames = async () => {
     try {
@@ -507,6 +524,26 @@ export default function PlayerProfilePage() {
           </>
         )}
       </div>
+
+      {/* Google Calendar Integration - Only show for owner */}
+      {isOwner && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">Calendar Integration</h2>
+
+          {successMessage && (
+            <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+              <p className="text-sm text-green-800 dark:text-green-300">{successMessage}</p>
+            </div>
+          )}
+
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Connect your Google Calendar to automatically create calendar events for game nights you organize.
+            Invited players will receive calendar invitations when you create a game night.
+          </p>
+
+          <GoogleCalendarButton />
+        </div>
+      )}
 
       {/* Statistics */}
       {stats && player.showStats && (

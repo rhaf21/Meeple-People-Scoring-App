@@ -16,6 +16,13 @@ interface Game {
   thumbnailUrl?: string;
 }
 
+interface Player {
+  _id: string;
+  name: string;
+  email?: string;
+  googleCalendarConnected: boolean;
+}
+
 export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreated }: CreateGameNightModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -27,12 +34,15 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
   const [isPrivate, setIsPrivate] = useState(false);
   const [suggestedGames, setSuggestedGames] = useState<string[]>([]);
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
+  const [invitedPlayers, setInvitedPlayers] = useState<string[]>([]);
+  const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       fetchGames();
+      fetchPlayers();
       // Set default date to tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -49,6 +59,17 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
       setAvailableGames(activeGames);
     } catch (err) {
       console.error('Error fetching games:', err);
+    }
+  };
+
+  const fetchPlayers = async () => {
+    try {
+      const data: any = await api.getPlayers();
+      // Only show players with email addresses (they can receive calendar invites)
+      const playersWithEmail = data.filter((player: any) => player.email);
+      setAvailablePlayers(playersWithEmail);
+    } catch (err) {
+      console.error('Error fetching players:', err);
     }
   };
 
@@ -76,6 +97,7 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
         maxAttendees: maxAttendees ? Number(maxAttendees) : undefined,
         isPrivate,
         suggestedGames: suggestedGames.length > 0 ? suggestedGames : undefined,
+        invitedPlayerIds: invitedPlayers.length > 0 ? invitedPlayers : undefined,
       };
 
       await api.createGameNight(gameNightData);
@@ -98,6 +120,14 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
     );
   };
 
+  const togglePlayerSelection = (playerId: string) => {
+    setInvitedPlayers(prev =>
+      prev.includes(playerId)
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
+  };
+
   const handleClose = () => {
     if (!loading) {
       setTitle('');
@@ -108,6 +138,7 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
       setMaxAttendees('');
       setIsPrivate(false);
       setSuggestedGames([]);
+      setInvitedPlayers([]);
       setError('');
       onClose();
     }
@@ -294,6 +325,57 @@ export default function CreateGameNightModal({ isOpen, onClose, onGameNightCreat
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {suggestedGames.length} game{suggestedGames.length !== 1 ? 's' : ''} selected
               </p>
+            )}
+          </div>
+
+          {/* Calendar Invites */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Send Calendar Invites (Optional)
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Select players to receive Google Calendar invites. They'll get notifications and can RSVP directly from their calendar.
+            </p>
+            {availablePlayers.length === 0 ? (
+              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No players with email addresses found. Players need to claim their profiles to receive calendar invites.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  {availablePlayers.map((player) => (
+                    <label
+                      key={player._id}
+                      className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={invitedPlayers.includes(player._id)}
+                          onChange={() => togglePlayerSelection(player._id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          disabled={loading}
+                        />
+                        <span className="ml-3 text-sm text-gray-900 dark:text-gray-100">
+                          {player.name}
+                        </span>
+                      </div>
+                      {player.googleCalendarConnected && (
+                        <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          📅 Connected
+                        </span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+                {invitedPlayers.length > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {invitedPlayers.length} player{invitedPlayers.length !== 1 ? 's' : ''} will receive calendar invites
+                  </p>
+                )}
+              </>
             )}
           </div>
 

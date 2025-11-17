@@ -58,6 +58,8 @@ interface GameNight {
   maxAttendees?: number;
   isPrivate: boolean;
   createdAt: string;
+  googleCalendarEventId?: string;
+  calendarSyncEnabled: boolean;
 }
 
 export default function GameNightDetailPage() {
@@ -90,6 +92,46 @@ export default function GameNightDetailPage() {
       setLoading(false);
     }
   };
+
+  const syncCalendarRsvps = async () => {
+    if (!gameNight || !user) return;
+
+    const isCreator = user.id === gameNight.createdBy;
+    if (!isCreator || !gameNight.calendarSyncEnabled || !gameNight.googleCalendarEventId) {
+      return; // Only organizer can sync, and only if calendar sync is enabled
+    }
+
+    try {
+      await api.syncGameNightRsvps(params.id as string);
+      // Silently refresh game night data after sync
+      const data: any = await api.getGameNight(params.id as string);
+      setGameNight(data);
+    } catch (err: any) {
+      // Silent failure - don't show errors for automatic sync
+      console.error('Calendar sync failed:', err);
+    }
+  };
+
+  // Automatic calendar RSVP sync for organizers
+  useEffect(() => {
+    if (!gameNight || !user) return;
+
+    const isCreator = user.id === gameNight.createdBy;
+    if (!isCreator || !gameNight.calendarSyncEnabled || !gameNight.googleCalendarEventId) {
+      return; // Only sync for organizers with calendar enabled
+    }
+
+    // Sync immediately on page load
+    syncCalendarRsvps();
+
+    // Then poll every 30 seconds
+    const interval = setInterval(() => {
+      syncCalendarRsvps();
+    }, 30000); // 30 seconds
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [gameNight?.calendarSyncEnabled, gameNight?.googleCalendarEventId, user?.id, params.id]);
 
   const handleRSVPChange = (newStatus: 'going' | 'maybe' | 'not-going' | null) => {
     // Refresh the game night data

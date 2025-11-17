@@ -32,6 +32,8 @@ export default function RecordGamePage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [gameDate, setGameDate] = useState<string>(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
+  const [gameTime, setGameTime] = useState<string>(new Date().toTimeString().slice(0, 5)); // HH:MM format
+  const [useCurrentDateTime, setUseCurrentDateTime] = useState<boolean>(true);
   const [inputMode, setInputMode] = useState<'score' | 'rank'>('score'); // For Pointing System toggle
   const [gamePlayers, setGamePlayers] = useState<GamePlayer[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
@@ -227,10 +229,15 @@ export default function RecordGamePage() {
     setError('');
 
     try {
+      // Combine date and time into ISO string
+      const dateTimeString = useCurrentDateTime
+        ? new Date().toISOString()
+        : new Date(`${gameDate}T${gameTime}`).toISOString();
+
       await api.createSession({
         gameId: selectedGame._id,
         playerCount: gamePlayers.length, // Total players who participated
-        playedAt: new Date(gameDate).toISOString(), // Include the selected date
+        playedAt: dateTimeString, // Include the selected date and time
         results: resultsToSubmit.map((p) => ({
           playerId: p.playerId,
           playerName: p.playerName,
@@ -253,6 +260,8 @@ export default function RecordGamePage() {
     setGamePlayers([]);
     setSelectedPlayerIds(new Set());
     setGameDate(new Date().toISOString().split('T')[0]);
+    setGameTime(new Date().toTimeString().slice(0, 5));
+    setUseCurrentDateTime(true);
     setInputMode('score');
     setError('');
   }
@@ -362,26 +371,67 @@ export default function RecordGamePage() {
               </div>
             </div>
 
-            {/* Step 2: Select Date */}
+            {/* Step 2: Select Date & Time */}
             {selectedGame && (
               <div ref={step2Ref} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-100">
-                <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">2. Select Date</h2>
-                <div>
-                  <label htmlFor="gameDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Game Date
+                <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">2. Select Date & Time</h2>
+
+                {/* Checkbox for using current date/time */}
+                <div className="mb-4">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useCurrentDateTime}
+                      onChange={(e) => setUseCurrentDateTime(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Use current date & time
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    id="gameDate"
-                    value={gameDate}
-                    max={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setGameDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Select the date when this game was played
+                  <p className="ml-7 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {useCurrentDateTime
+                      ? `Recording as: ${new Date().toLocaleString()}`
+                      : 'Select a custom date and time below'
+                    }
                   </p>
                 </div>
+
+                {/* Date and Time inputs */}
+                {!useCurrentDateTime && (
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="gameDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Game Date
+                      </label>
+                      <input
+                        type="date"
+                        id="gameDate"
+                        value={gameDate}
+                        max={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => setGameDate(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="gameTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Game Time
+                      </label>
+                      <input
+                        type="time"
+                        id="gameTime"
+                        value={gameTime}
+                        onChange={(e) => setGameTime(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                      />
+                    </div>
+
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Select the date and time when this game was played
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

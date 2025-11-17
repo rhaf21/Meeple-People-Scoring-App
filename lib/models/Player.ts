@@ -40,6 +40,12 @@ export interface IPlayer extends Document {
   publicProfile: boolean;
   showStats: boolean;
 
+  // Google Calendar Integration
+  googleAccessToken?: string; // Encrypted OAuth access token
+  googleRefreshToken?: string; // Encrypted OAuth refresh token
+  googleTokenExpiry?: Date; // Token expiration timestamp
+  googleCalendarConnected: boolean; // Whether Google Calendar is connected
+
   createdAt: Date;
   updatedAt: Date;
   lastPlayedAt?: Date;
@@ -149,6 +155,23 @@ const PlayerSchema = new Schema<IPlayer>(
     showStats: {
       type: Boolean,
       default: true,
+    },
+
+    // Google Calendar Integration
+    googleAccessToken: {
+      type: String,
+      select: false, // Don't return token in queries by default
+    },
+    googleRefreshToken: {
+      type: String,
+      select: false, // Don't return token in queries by default
+    },
+    googleTokenExpiry: {
+      type: Date,
+    },
+    googleCalendarConnected: {
+      type: Boolean,
+      default: false,
     },
 
     lastPlayedAt: {

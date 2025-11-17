@@ -23,6 +23,11 @@ export interface IGameNight extends Document {
   maxAttendees?: number;
   isPrivate: boolean;
   notes?: string;
+  // Google Calendar Integration
+  invitedPlayerIds: Types.ObjectId[]; // Players selected to receive calendar invites
+  googleCalendarEventId?: string; // Google Calendar event ID for syncing
+  googleCalendarUrl?: string; // Direct link to view event in Google Calendar
+  calendarSyncEnabled: boolean; // Whether calendar sync is active
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,6 +110,22 @@ const GameNightSchema = new Schema<IGameNight>(
     notes: {
       type: String,
       maxlength: 2000,
+    },
+    // Google Calendar Integration fields
+    invitedPlayerIds: {
+      type: [Schema.Types.ObjectId],
+      ref: 'Player',
+      default: [],
+    },
+    googleCalendarEventId: {
+      type: String,
+    },
+    googleCalendarUrl: {
+      type: String,
+    },
+    calendarSyncEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {
