@@ -194,14 +194,27 @@ export async function DELETE(
       );
     }
 
-    // Soft delete - mark as cancelled instead of deleting
-    gameNight.status = 'cancelled';
-    await gameNight.save();
+    // Check if permanent delete is requested
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
 
-    return NextResponse.json({
-      message: 'Game night cancelled successfully',
-      gameNight,
-    });
+    if (permanent) {
+      // Hard delete - permanently remove from database
+      await GameNight.findByIdAndDelete(id);
+
+      return NextResponse.json({
+        message: 'Game night permanently deleted',
+      });
+    } else {
+      // Soft delete - mark as cancelled instead of deleting
+      gameNight.status = 'cancelled';
+      await gameNight.save();
+
+      return NextResponse.json({
+        message: 'Game night cancelled successfully',
+        gameNight,
+      });
+    }
 
   } catch (error) {
     console.error('Error deleting game night:', error);

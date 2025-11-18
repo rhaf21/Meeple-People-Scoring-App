@@ -25,6 +25,147 @@ export default function ChangelogPage() {
           </p>
         </div>
 
+        {/* Version 1.2.1 */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Version 1.2.1
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Game Nights Management Improvements
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm font-medium rounded-full">
+              Latest
+            </span>
+          </div>
+
+          {/* New Features */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+              <span className="mr-2">✨</span> New Features
+            </h3>
+            <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Badges/Achievements system - earn badges for milestones like games played, wins, win streaks, and more</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>25 unique badges across 7 categories with bronze, silver, gold, and platinum tiers</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Retroactive badge awards - existing players automatically receive earned badges via admin migration</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Custom SVG badge icons with tier-colored styling (bronze, silver, gold, platinum)</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Hover tooltips on badges showing description and earned date</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Profile picture editing - users can now upload and change their profile photo from their profile page</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Improvements */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+              <span className="mr-2">🔧</span> Improvements
+            </h3>
+            <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Fixed badge container sizing for consistent display across all badges</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Improved tier color distinction - silver (sky blue), gold (bright yellow), platinum (purple)</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Replaced game nights filter tabs with cleaner dropdown menu</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Added delete/cancel options for game night creators (visible in card menu)</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Soft delete option to cancel game nights (marks as cancelled, keeps data)</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Hard delete option to permanently remove game nights from database</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Confirmation dialogs for both cancel and permanent delete actions</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Menu automatically closes when clicking outside</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Fixed dropdown arrow padding with proper right spacing for better visual clarity</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Fixed card header alignment - title, status badge, and menu button now properly aligned in same row</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Improved element spacing with consistent 20px gap between card header elements</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 mt-1">•</span>
+                <span>Added "View All" link to Recent Games section on homepage that redirects to History page</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Technical Details */}
+          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Technical Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div>
+                <span className="font-medium">New Files:</span>
+                <ul className="mt-1 space-y-1 ml-4">
+                  <li>• lib/data/badgeDefinitions.ts</li>
+                  <li>• lib/services/badges.ts</li>
+                  <li>• app/api/admin/badges/migrate/route.ts</li>
+                  <li>• components/badges/BadgeIcon.tsx</li>
+                  <li>• components/badges/icons.tsx</li>
+                  <li>• components/ui/Tooltip.tsx</li>
+                </ul>
+              </div>
+              <div>
+                <span className="font-medium">Modified Files:</span>
+                <ul className="mt-1 space-y-1 ml-4">
+                  <li>• lib/models/Player.ts</li>
+                  <li>• app/players/[id]/page.tsx</li>
+                  <li>• app/api/sessions/route.ts</li>
+                  <li>• app/page.tsx</li>
+                  <li>• app/game-nights/page.tsx</li>
+                  <li>• app/api/game-nights/[id]/route.ts</li>
+                  <li>• lib/api/client.ts</li>
+                  <li>• components/VersionBadge.tsx</li>
+                  <li>• app/changelog/page.tsx</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Version 1.2.0 */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -36,9 +177,6 @@ export default function ChangelogPage() {
                 Google Calendar Integration & Email Notifications
               </p>
             </div>
-            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm font-medium rounded-full">
-              Latest
-            </span>
           </div>
 
           {/* New Features */}

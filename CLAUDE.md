@@ -338,9 +338,40 @@ curl http://localhost:3000/api/stats/leaderboard/overall
   - ✨ New Features (new functionality added)
   - 🔧 Improvements (enhancements to existing features)
   - 🐛 Bug Fixes (fixes to broken functionality)
+  - 📱 Responsive Design (mobile/tablet layout improvements)
+  - ♿ Accessibility (A11y improvements, ARIA labels, keyboard navigation)
 - **Format**: Add changes to the latest version section, create new version if needed
-- **Details**: Include file names and line numbers for significant changes
+- **Details**: Include file names in Technical Details section
 - **Purpose**: Keep users informed and track project evolution
+
+#### What to Document in Changelog
+
+**REQUIRED - Document ALL changes**:
+- ✨ **New Features**: Any new functionality, buttons, links, pages, components, modals
+- 🔧 **Improvements**: UI/UX fixes, spacing adjustments, layout improvements, performance enhancements, padding/margin changes
+- 🐛 **Bug Fixes**: Any fixes to broken functionality, errors, unexpected behavior, TypeScript errors
+- 📱 **Responsive Design**: Mobile/tablet layout improvements, breakpoint adjustments
+- ♿ **Accessibility**: A11y improvements, ARIA labels, keyboard navigation, screen reader support
+
+#### Examples of Changes That MUST Be Documented
+
+**YES - Document these**:
+- ✅ Adding a "View All" link → Document as improvement
+- ✅ Fixing button padding or spacing → Document as UI improvement
+- ✅ Adjusting gaps between elements → Document as UX improvement
+- ✅ Fixing alignment issues → Document as UI fix
+- ✅ Changing dropdown arrow styling → Document as improvement
+- ✅ Any visual changes users can see → Document it!
+- ✅ Adding confirmation dialogs → Document as improvement
+- ✅ Changing filter from tabs to dropdown → Document as improvement
+
+**NO - Don't document these**:
+- ❌ Internal refactoring with no user-facing changes
+- ❌ Code comments updates (unless they affect documentation)
+- ❌ Dependency updates (unless they add new features)
+
+#### Rule of Thumb
+**If you changed code that affects what the user sees or experiences, it goes in the changelog. No exceptions.**
 
 ## Deployment Checklist
 

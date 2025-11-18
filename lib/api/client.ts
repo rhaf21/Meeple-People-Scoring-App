@@ -185,8 +185,8 @@ export const api = {
   updateGameNight: (id: string, data: any) =>
     apiClient.put(`/api/game-nights/${id}`, data, true),
 
-  deleteGameNight: (id: string) =>
-    apiClient.delete(`/api/game-nights/${id}`, true),
+  deleteGameNight: (id: string, permanent: boolean = false) =>
+    apiClient.delete(`/api/game-nights/${id}${permanent ? '?permanent=true' : ''}`, true),
 
   rsvpGameNight: (id: string, rsvpStatus: 'going' | 'maybe' | 'not-going') =>
     apiClient.post(`/api/game-nights/${id}/rsvp`, { rsvpStatus }, true),

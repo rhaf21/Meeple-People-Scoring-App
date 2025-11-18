@@ -7,6 +7,15 @@ export interface IAvailability {
   recurring: boolean;
 }
 
+export interface IBadge {
+  badgeId: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum';
+  earnedAt: Date;
+}
+
 
 // Validator function for array length
 function arrayLimit(val: any): boolean {
@@ -40,6 +49,9 @@ export interface IPlayer extends Document {
   publicProfile: boolean;
   showStats: boolean;
 
+  // Badges/Achievements
+  badges: IBadge[];
+
   // Google Calendar Integration
   googleAccessToken?: string; // Encrypted OAuth access token
   googleRefreshToken?: string; // Encrypted OAuth refresh token
@@ -69,6 +81,34 @@ const AvailabilitySchema = new Schema<IAvailability>({
   recurring: {
     type: Boolean,
     default: true,
+  },
+}, { _id: false });
+
+const BadgeSchema = new Schema<IBadge>({
+  badgeId: {
+    type: String,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  icon: {
+    type: String,
+    required: true,
+  },
+  tier: {
+    type: String,
+    enum: ['bronze', 'silver', 'gold', 'platinum'],
+  },
+  earnedAt: {
+    type: Date,
+    required: true,
+    default: Date.now,
   },
 }, { _id: false });
 
@@ -155,6 +195,12 @@ const PlayerSchema = new Schema<IPlayer>(
     showStats: {
       type: Boolean,
       default: true,
+    },
+
+    // Badges/Achievements
+    badges: {
+      type: [BadgeSchema],
+      default: () => [],
     },
 
     // Google Calendar Integration

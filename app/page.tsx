@@ -120,7 +120,15 @@ export default function Dashboard() {
 
                 {/* Recent Games */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 card-hover animate-fadeInUp animate-delay-200">
-                  <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">Recent Games</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-gray-900 dark:text-gray-100">Recent Games</h2>
+                    <Link
+                      href="/history"
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      View All
+                    </Link>
+                  </div>
                   {recentGames.length === 0 ? (
                     <p className="text-gray-700 dark:text-gray-300 text-center py-8">No games played yet.</p>
                   ) : (

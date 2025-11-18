@@ -33,10 +33,25 @@ export default function GameNightsPage() {
   const [error, setError] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'scheduled' | 'in-progress' | 'completed-cancelled'>('scheduled');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; permanent: boolean; title: string } | null>(null);
 
   useEffect(() => {
     fetchGameNights();
   }, [filter]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId && !(event.target as Element).closest('.relative')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [openMenuId]);
 
   const fetchGameNights = async () => {
     setLoading(true);
@@ -112,6 +127,21 @@ export default function GameNightsPage() {
     return attendees.filter(a => a.rsvpStatus === 'maybe').length;
   };
 
+  const handleDelete = async (id: string, permanent: boolean) => {
+    try {
+      await api.deleteGameNight(id, permanent);
+      setDeleteConfirm(null);
+      setOpenMenuId(null);
+      fetchGameNights();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete game night');
+    }
+  };
+
+  const isCreator = (gameNight: GameNight) => {
+    return user && gameNight.createdByName === user.name;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
@@ -141,48 +171,23 @@ export default function GameNightsPage() {
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setFilter('scheduled')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'scheduled'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
+      {/* Filter Dropdown */}
+      <div className="mb-6">
+        <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Filter by Status
+        </label>
+        <select
+          id="status-filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as typeof filter)}
+          className="block w-full md:w-64 pl-4 pr-10 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-no-repeat bg-right"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: "right 0.75rem center", backgroundSize: "1.5em 1.5em" }}
         >
-          Scheduled
-        </button>
-        <button
-          onClick={() => setFilter('in-progress')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'in-progress'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
-        >
-          In Progress
-        </button>
-        <button
-          onClick={() => setFilter('completed-cancelled')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'completed-cancelled'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
-        >
-          Completed & Cancelled
-        </button>
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            filter === 'all'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-          }`}
-        >
-          All Statuses
-        </button>
+          <option value="scheduled">Scheduled</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed-cancelled">Completed & Cancelled</option>
+          <option value="all">All Statuses</option>
+        </select>
       </div>
 
       {/* Loading State */}
@@ -232,21 +237,66 @@ export default function GameNightsPage() {
       {!loading && !error && gameNights.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {gameNights.map((gameNight) => (
-            <Link
-              key={gameNight._id}
-              href={`/game-nights/${gameNight._id}`}
-              className="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg dark:hover:shadow-gray-900/30 transition-shadow overflow-hidden"
-            >
-              {/* Header */}
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg text-gray-900 dark:text-gray-100 flex-1">
-                    {gameNight.title}
-                  </h3>
-                  <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(gameNight.status)}`}>
-                    {gameNight.status}
-                  </span>
-                </div>
+            <div key={gameNight._id} className="relative bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg dark:hover:shadow-gray-900/30 transition-shadow overflow-hidden">
+              <Link
+                href={`/game-nights/${gameNight._id}`}
+                className="block"
+              >
+                {/* Header */}
+                <div className="p-6">
+                  <div className="flex items-center gap-5 mb-2">
+                    <h3 className="text-lg text-gray-900 dark:text-gray-100 flex-1 min-w-0">
+                      {gameNight.title}
+                    </h3>
+                    <span className={`px-2 py-1 text-xs font-medium rounded whitespace-nowrap ${getStatusBadge(gameNight.status)}`}>
+                      {gameNight.status}
+                    </span>
+                    {/* Delete Menu - Only show for creator */}
+                    {isCreator(gameNight) && (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === gameNight._id ? null : gameNight._id);
+                          }}
+                          className="p-2 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                          aria-label="More options"
+                        >
+                          <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </button>
+
+                        {openMenuId === gameNight._id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-lg z-10">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setDeleteConfirm({ id: gameNight._id, permanent: false, title: gameNight.title });
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-t-lg transition-colors"
+                            >
+                              Cancel Game Night
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setDeleteConfirm({ id: gameNight._id, permanent: true, title: gameNight.title });
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-b-lg transition-colors"
+                            >
+                              Delete Permanently
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                 {/* Date & Location */}
                 <div className="space-y-2 mb-4">
@@ -298,10 +348,46 @@ export default function GameNightsPage() {
                   </p>
                 </div>
               </div>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
       )}
+
+          {/* Delete Confirmation Dialog */}
+          {deleteConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  {deleteConfirm.permanent ? 'Delete Permanently?' : 'Cancel Game Night?'}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {deleteConfirm.permanent
+                    ? `Are you sure you want to permanently delete "${deleteConfirm.title}"? This action cannot be undone.`
+                    : `Are you sure you want to cancel "${deleteConfirm.title}"? This will mark it as cancelled but won't delete it.`
+                  }
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDelete(deleteConfirm.id, deleteConfirm.permanent)}
+                    className={`px-4 py-2 text-white rounded-lg transition-colors ${
+                      deleteConfirm.permanent
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : 'bg-orange-600 hover:bg-orange-700'
+                    }`}
+                  >
+                    {deleteConfirm.permanent ? 'Delete Permanently' : 'Cancel Game Night'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Create Game Night Modal */}
           <CreateGameNightModal

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 export default function VersionBadge() {
-  const version = 'v1.2.0';
+  const version = 'v1.2.1';
 
   return (
     <Link

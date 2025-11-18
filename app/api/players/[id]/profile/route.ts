@@ -40,6 +40,7 @@ export async function GET(
       name: player.name,
       photoUrl: player.photoUrl,
       profileClaimed: player.profileClaimed,
+      badges: player.badges || [],
     };
 
     // Add public fields

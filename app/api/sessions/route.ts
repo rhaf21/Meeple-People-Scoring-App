@@ -11,6 +11,7 @@ import {
   PlayerResult,
 } from '@/lib/services/scoring';
 import { recalculatePlayerStats } from '@/lib/services/stats';
+import { updatePlayerBadges } from '@/lib/services/badges';
 import { requireUser } from '@/lib/middleware/authMiddleware';
 
 // GET all game sessions
@@ -157,10 +158,13 @@ export async function POST(request: NextRequest) {
       { lastPlayedAt: session.playedAt }
     );
 
-    // Recalculate stats for all affected players (in background)
-    Promise.all(playerIds.map((playerId: string) => recalculatePlayerStats(playerId))).catch(
-      (err) => console.error('Error recalculating stats:', err)
-    );
+    // Recalculate stats and check badges for all affected players (in background)
+    Promise.all(
+      playerIds.map(async (playerId: string) => {
+        await recalculatePlayerStats(playerId);
+        await updatePlayerBadges(playerId);
+      })
+    ).catch((err) => console.error('Error recalculating stats/badges:', err));
 
     return NextResponse.json(session, { status: 201 });
   } catch (error) {

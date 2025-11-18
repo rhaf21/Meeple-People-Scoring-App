@@ -7,12 +7,25 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { api, apiClient } from '@/lib/api/client';
 import GoogleCalendarButton from '@/components/GoogleCalendarButton';
+import ImageUpload from '@/components/ImageUpload';
+import BadgeIcon from '@/components/badges/BadgeIcon';
+import Tooltip from '@/components/ui/Tooltip';
+import { getTierBgColor } from '@/lib/data/badgeDefinitions';
 
 interface Availability {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
   recurring: boolean;
+}
+
+interface Badge {
+  badgeId: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum';
+  earnedAt: string;
 }
 
 interface PlayerProfile {
@@ -29,6 +42,7 @@ interface PlayerProfile {
   availability: Availability[];
   publicProfile: boolean;
   showStats: boolean;
+  badges?: Badge[];
   createdAt: string;
 }
 
@@ -47,7 +61,7 @@ interface PlayerStats {
 export default function PlayerProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [player, setPlayer] = useState<PlayerProfile | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +79,8 @@ export default function PlayerProfilePage() {
   const [availableGames, setAvailableGames] = useState<{_id: string; name: string}[]>([]);
   const [editPublicProfile, setEditPublicProfile] = useState(true);
   const [editShowStats, setEditShowStats] = useState(true);
+  const [editPhotoUrl, setEditPhotoUrl] = useState<string | undefined>(undefined);
+  const [editPhotoPublicId, setEditPhotoPublicId] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -115,6 +131,8 @@ export default function PlayerProfilePage() {
       setEditLeastFavoriteGames(profileData.leastFavoriteGames || []);
       setEditPublicProfile(profileData.publicProfile ?? true);
       setEditShowStats(profileData.showStats ?? true);
+      setEditPhotoUrl(profileData.photoUrl);
+      setEditPhotoPublicId(undefined);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch player profile');
     } finally {
@@ -127,14 +145,27 @@ export default function PlayerProfilePage() {
     setError('');
 
     try {
-      await api.updatePlayerProfile(params.id as string, {
+      const updateData: any = {
         bio: editBio || undefined,
         playStyle: editPlayStyle || undefined,
         topFavoriteGames: editTopFavoriteGames,
         leastFavoriteGames: editLeastFavoriteGames,
         publicProfile: editPublicProfile,
         showStats: editShowStats,
-      });
+      };
+
+      // Include photo data if a new photo was uploaded
+      if (editPhotoPublicId) {
+        updateData.photoUrl = editPhotoUrl;
+        updateData.photoPublicId = editPhotoPublicId;
+      }
+
+      await api.updatePlayerProfile(params.id as string, updateData);
+
+      // Update AuthContext user if editing own profile
+      if (isOwner && editPhotoPublicId && updateUser) {
+        updateUser({ photoUrl: editPhotoUrl });
+      }
 
       // Refresh player data
       await fetchPlayer();
@@ -156,6 +187,8 @@ export default function PlayerProfilePage() {
       setEditLeastFavoriteGames(player.leastFavoriteGames || []);
       setEditPublicProfile(player.publicProfile ?? true);
       setEditShowStats(player.showStats ?? true);
+      setEditPhotoUrl(player.photoUrl);
+      setEditPhotoPublicId(undefined);
     }
   };
 
@@ -291,6 +324,21 @@ export default function PlayerProfilePage() {
         {/* Edit Mode */}
         {isEditing ? (
           <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Profile Picture
+              </label>
+              <ImageUpload
+                currentImageUrl={editPhotoUrl}
+                onUploadComplete={(url, publicId) => {
+                  setEditPhotoUrl(url);
+                  setEditPhotoPublicId(publicId);
+                }}
+                type="player"
+                label="Change Photo"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Bio
@@ -591,6 +639,51 @@ export default function PlayerProfilePage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Badges */}
+      {player.badges && player.badges.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <h2 className="text-xl text-gray-900 dark:text-gray-100 mb-4">
+            Badges ({player.badges.length})
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {player.badges.map((badge, idx) => (
+              <Tooltip
+                key={idx}
+                content={
+                  <div className="text-center">
+                    <div className="font-medium">{badge.name}</div>
+                    <div className="text-gray-300 text-[10px] mt-1">{badge.description}</div>
+                    <div className="text-gray-400 text-[10px] mt-1">
+                      Earned: {new Date(badge.earnedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                }
+              >
+                <div
+                  className={`flex flex-col items-center justify-between p-3 rounded-lg border cursor-pointer hover:scale-105 transition-transform h-[100px] ${getTierBgColor(badge.tier)}`}
+                >
+                  <BadgeIcon
+                    badgeId={badge.badgeId}
+                    tier={badge.tier}
+                    size="md"
+                    fallbackEmoji={badge.icon}
+                  />
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-medium text-gray-900 dark:text-gray-100 text-center leading-tight">
+                      {badge.name}
+                    </span>
+                    <span className={`text-[10px] capitalize mt-0.5 ${badge.tier ? 'text-gray-500 dark:text-gray-400' : 'text-transparent'}`}>
+                      {badge.tier || 'none'}
+                    </span>
+                  </div>
+                </div>
+              </Tooltip>
+            ))}
           </div>
         </div>
       )}
